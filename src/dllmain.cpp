@@ -1,7 +1,7 @@
 // dllmain.cpp : Defines the entry point for the DLL application.
 #include <Windows.h>
 
-void main(HMODULE hMod)
+void wmain(HMODULE hMod)
 {
 
 
@@ -17,7 +17,7 @@ BOOL APIENTRY DllMain( HMODULE hModule,
     switch (ul_reason_for_call)
     {
     case DLL_PROCESS_ATTACH:
-        CloseHandle(CreateThread(nullptr, 0, reinterpret_cast<LPTHREAD_START_ROUTINE>(main), hModule, 0, nullptr));
+        CloseHandle(CreateThread(nullptr, 0, reinterpret_cast<LPTHREAD_START_ROUTINE>(wmain), hModule, 0, nullptr));
         break;
     case DLL_PROCESS_DETACH:
         break;
