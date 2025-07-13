@@ -1,0 +1,55 @@
+#pragma once
+#include "../../Definitions.h"
+
+namespace TG::Windows
+{
+	class Module;
+
+	class PEHeader
+	{
+	public:
+		explicit PEHeader(Module* pModule);
+
+		//! GetProcAddress
+		//! @param funcName The functions to search
+		//! @return The pointer to the func or an error value
+		std::expected<std::uintptr_t*, TG_STATUS> GetProcAddress(const std::string& funcName);
+
+		//! 
+		//! @return The pointer to the IMAGE_NT_HEADERS or an error value
+		[[nodiscard]] const std::expected<IMAGE_NT_HEADERS*, TG_STATUS>& GetImageNtHeaders() const;
+
+		//! 
+		//! @return The pointer to the IMAGE_OPTIONAL_HEADER or an error value
+		[[nodiscard]] const std::expected<IMAGE_OPTIONAL_HEADER*, TG::TG_STATUS>& GetOptionalHeaders() const;
+
+		//! 
+		//! @return The pointer to the IMAGE_DOS_HEADER or an error value
+		[[nodiscard]] const std::expected<IMAGE_DOS_HEADER*, TG::TG_STATUS>& GetDosHeaders() const;
+
+		//! 
+		//! @return The pointer to the .text Section or an error value
+		std::expected<std::uintptr_t*, TG_STATUS> GetTextSection();
+
+		//! 
+		//! @return The size of the .text section or an error value
+		std::expected<std::size_t, TG_STATUS> GetTextSectionSize();
+
+		//! Generates a blake3 hash of the .text section
+		//! @return A std::vector<std::uint8_t> hash of the .text section 
+		std::expected<std::vector<std::uint8_t>, TG_STATUS> GetHashOfTextSection();
+
+		//! Checks if the file is valid (PE Header)
+		//! @return True if it is, false of not, or an error value
+		std::expected<bool, TG_STATUS> IsValidFile() const;
+
+	private:
+		IMAGE_NT_HEADERS* m_pNtHeaders = nullptr;
+		IMAGE_OPTIONAL_HEADER* m_pOptionalHeader = nullptr;
+		IMAGE_DOS_HEADER* m_pDosHeader = nullptr;
+		TG::Windows::Module* m_pModule = nullptr;
+
+
+		IMAGE_SECTION_HEADER* GetSectionHeader(const std::wstring& sectionName);
+	};
+}
