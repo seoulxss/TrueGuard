@@ -1,14 +1,17 @@
 #pragma once
+#include <memory>
+
 #include "../../Definitions.h"
 
 namespace TG::Windows
 {
+	class HookManager;
 	class Module;
 
 	class PEHeader
 	{
 	public:
-		explicit PEHeader(Module* pModule);
+		explicit PEHeader(Module* pModule, const std::shared_ptr<HookManager>& HookManager);
 
 		//! GetProcAddress
 		//! @param funcName The functions to search
@@ -43,12 +46,15 @@ namespace TG::Windows
 		//! @return True if it is, false of not, or an error value
 		std::expected<bool, TG_STATUS> IsValidFile() const;
 
+
+		const std::vector<std::uint8_t>& GetOrigHashOfText() const;
 	private:
 		IMAGE_NT_HEADERS* m_pNtHeaders = nullptr;
 		IMAGE_OPTIONAL_HEADER* m_pOptionalHeader = nullptr;
 		IMAGE_DOS_HEADER* m_pDosHeader = nullptr;
 		TG::Windows::Module* m_pModule = nullptr;
-
+		std::shared_ptr<HookManager> m_pHookManager = nullptr;
+		std::vector<std::uint8_t> m_oHashOfTextSection = {};
 
 		IMAGE_SECTION_HEADER* GetSectionHeader(const std::wstring& sectionName);
 	};

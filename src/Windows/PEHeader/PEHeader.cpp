@@ -3,7 +3,7 @@
 #include "../../Wrapper/Hashing.h"
 #include "../ModuleManager/ModuleManager.h"
 
-TG::Windows::PEHeader::PEHeader(Module* pModule) : m_pModule(pModule)
+TG::Windows::PEHeader::PEHeader(Module* pModule, const std::shared_ptr<HookManager>& HookManager) : m_pModule(pModule), m_pHookManager(HookManager)
 {
 	if (!pModule or !pModule->GetDataTableEntry().has_value())
 		throw std::runtime_error("");
@@ -14,6 +14,8 @@ TG::Windows::PEHeader::PEHeader(Module* pModule) : m_pModule(pModule)
 
 	m_pNtHeaders = reinterpret_cast<IMAGE_NT_HEADERS*>(reinterpret_cast<std::byte*>(m_pDosHeader) + m_pDosHeader->e_lfanew);
 	m_pOptionalHeader = &m_pNtHeaders->OptionalHeader;
+
+	m_oHashOfTextSection = GetHashOfTextSection();
 }
 
 std::expected<std::uintptr_t*, TG::TG_STATUS> TG::Windows::PEHeader::GetProcAddress(const std::string& funcName)
@@ -113,6 +115,8 @@ std::expected<std::vector<std::uint8_t>, TG::TG_STATUS> TG::Windows::PEHeader::G
 	if (!start.has_value())
 		return std::unexpected(start.error());
 
+	//Disable hooks if any are there!
+
 	hasher.Update(start.value(), size.value());
 	auto hash = hasher.Finalize();
 	return hash;
@@ -130,6 +134,11 @@ std::expected<bool, TG::TG_STATUS> TG::Windows::PEHeader::IsValidFile() const
 		return false;
 
 	return true;
+}
+
+const std::vector<std::uint8_t>& TG::Windows::PEHeader::GetOrigHashOfText() const
+{
+	return m_oHashOfTextSection;
 }
 
 IMAGE_SECTION_HEADER* TG::Windows::PEHeader::GetSectionHeader(const std::wstring& sectionName)
