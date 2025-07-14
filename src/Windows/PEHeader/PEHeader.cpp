@@ -8,17 +8,17 @@ TG::Windows::PEHeader::PEHeader(Module* pModule, const std::shared_ptr<HookManag
 	if (!pModule or !pModule->GetDataTableEntry().has_value())
 		throw std::runtime_error("");
 
-	m_pDosHeader = reinterpret_cast<IMAGE_DOS_HEADER*>(pModule->GetDataTableEntry().value());
+	m_pDosHeader = reinterpret_cast<IMAGE_DOS_HEADER*>(pModule->GetDataTableEntry().value()->DllBase);
 	if (!m_pDosHeader)
 		return;
 
 	m_pNtHeaders = reinterpret_cast<IMAGE_NT_HEADERS*>(reinterpret_cast<std::byte*>(m_pDosHeader) + m_pDosHeader->e_lfanew);
 	m_pOptionalHeader = &m_pNtHeaders->OptionalHeader;
 
-	m_oHashOfTextSection = GetHashOfTextSection();
+	m_oHashOfTextSection = GetHashOfTextSection().value();
 }
 
-std::expected<std::uintptr_t*, TG::TG_STATUS> TG::Windows::PEHeader::GetProcAddress(const std::string& funcName)
+std::expected<std::uintptr_t*, TG::TG_STATUS> TG::Windows::PEHeader::GetProcAddress(const std::string& funcName) const
 {
 	auto dataTable = m_pModule->GetDataTableEntry();
 	if (!dataTable.has_value()) 
@@ -55,7 +55,7 @@ std::expected<std::uintptr_t*, TG::TG_STATUS> TG::Windows::PEHeader::GetProcAddr
 	return std::unexpected(TG_STATUS::FUNCTION_NOT_FOUND);
 }
 
-const std::expected<IMAGE_NT_HEADERS*, TG::TG_STATUS>& TG::Windows::PEHeader::GetImageNtHeaders() const
+const std::expected<const IMAGE_NT_HEADERS*, TG::TG_STATUS>& TG::Windows::PEHeader::GetImageNtHeaders() const
 {
 	if (m_pNtHeaders)
 		return m_pNtHeaders;
@@ -63,7 +63,7 @@ const std::expected<IMAGE_NT_HEADERS*, TG::TG_STATUS>& TG::Windows::PEHeader::Ge
 	return std::unexpected<TG_STATUS>(TG_STATUS::NULL_PTR);
 }
 
-const std::expected<IMAGE_OPTIONAL_HEADER*, TG::TG_STATUS>& TG::Windows::PEHeader::GetOptionalHeaders() const
+const std::expected<const IMAGE_OPTIONAL_HEADER*, TG::TG_STATUS>& TG::Windows::PEHeader::GetOptionalHeaders() const
 {
 	if (m_pNtHeaders)
 		return m_pOptionalHeader;
@@ -71,7 +71,7 @@ const std::expected<IMAGE_OPTIONAL_HEADER*, TG::TG_STATUS>& TG::Windows::PEHeade
 	return std::unexpected<TG_STATUS>(TG_STATUS::NULL_PTR);
 }
 
-const std::expected<IMAGE_DOS_HEADER*, TG::TG_STATUS>& TG::Windows::PEHeader::GetDosHeaders() const
+const std::expected<const IMAGE_DOS_HEADER*, TG::TG_STATUS>& TG::Windows::PEHeader::GetDosHeaders() const
 {
 	if (m_pNtHeaders)
 		return m_pDosHeader;
@@ -100,7 +100,7 @@ std::expected<std::size_t, TG::TG_STATUS> TG::Windows::PEHeader::GetTextSectionS
 	if (!sectionHeader)
 		return std::unexpected<TG_STATUS>(TG_STATUS::NO_SECTION_FOUND);
 
-	return reinterpret_cast<std::size_t>(static_cast<std::byte*>(m_pModule->GetDataTableEntry().value()->DllBase) + sectionHeader->SizeOfRawData);
+	return static_cast<std::size_t>(sectionHeader->Misc.VirtualSize);
 }
 
 std::expected<std::vector<std::uint8_t>, TG::TG_STATUS> TG::Windows::PEHeader::GetHashOfTextSection()
@@ -110,10 +110,10 @@ std::expected<std::vector<std::uint8_t>, TG::TG_STATUS> TG::Windows::PEHeader::G
 	auto start = GetTextSection();
 
 	if (!size.has_value())
-		return std::unexpected(size.error());
+		return std::unexpected<TG::TG_STATUS>(size.error());
 
 	if (!start.has_value())
-		return std::unexpected(start.error());
+		return std::unexpected<TG::TG_STATUS>(start.error());
 
 	//Disable hooks if any are there!
 

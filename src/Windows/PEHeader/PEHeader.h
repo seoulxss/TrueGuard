@@ -16,19 +16,19 @@ namespace TG::Windows
 		//! GetProcAddress
 		//! @param funcName The functions to search
 		//! @return The pointer to the func or an error value
-		std::expected<std::uintptr_t*, TG_STATUS> GetProcAddress(const std::string& funcName);
+		std::expected<std::uintptr_t*, TG_STATUS> GetProcAddress(const std::string& funcName) const;
 
 		//! 
 		//! @return The pointer to the IMAGE_NT_HEADERS or an error value
-		[[nodiscard]] const std::expected<IMAGE_NT_HEADERS*, TG_STATUS>& GetImageNtHeaders() const;
+		[[nodiscard]] const std::expected<const IMAGE_NT_HEADERS*, TG::TG_STATUS>& GetImageNtHeaders() const;
 
 		//! 
 		//! @return The pointer to the IMAGE_OPTIONAL_HEADER or an error value
-		[[nodiscard]] const std::expected<IMAGE_OPTIONAL_HEADER*, TG::TG_STATUS>& GetOptionalHeaders() const;
+		[[nodiscard]] const std::expected<const IMAGE_OPTIONAL_HEADER*, TG::TG_STATUS>& GetOptionalHeaders() const;
 
 		//! 
 		//! @return The pointer to the IMAGE_DOS_HEADER or an error value
-		[[nodiscard]] const std::expected<IMAGE_DOS_HEADER*, TG::TG_STATUS>& GetDosHeaders() const;
+		[[nodiscard]] const std::expected<const IMAGE_DOS_HEADER*, TG::TG_STATUS>& GetDosHeaders() const;
 
 		//! 
 		//! @return The pointer to the .text Section or an error value
@@ -46,8 +46,9 @@ namespace TG::Windows
 		//! @return True if it is, false of not, or an error value
 		std::expected<bool, TG_STATUS> IsValidFile() const;
 
-
-		const std::vector<std::uint8_t>& GetOrigHashOfText() const;
+		//! Returns the original .test hash at init
+		//! @return Vector of the orig hash value
+		[[nodiscard]] const std::vector<std::uint8_t>& GetOrigHashOfText() const;
 	private:
 		IMAGE_NT_HEADERS* m_pNtHeaders = nullptr;
 		IMAGE_OPTIONAL_HEADER* m_pOptionalHeader = nullptr;
