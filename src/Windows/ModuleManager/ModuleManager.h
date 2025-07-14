@@ -41,7 +41,7 @@ namespace TG::Windows
 
 		//! Links the module back to the PEB-List
 		//! @return True if it was successfully
-		std::expected<bool, TG_STATUS> LinkModuleInPEBList() const;
+		std::expected<bool, TG_STATUS> LinkModuleInPEBList();
 
 		//! Erases the PEB-Header in memory, this can cause crashes
 		//! @return True if it was successfully
