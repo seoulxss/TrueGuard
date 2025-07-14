@@ -40,7 +40,7 @@
     <None Include="vcpkg.json" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="ext\xorstr.h">
+    <ClInclude Include="ext\XorStr\xorstr.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\Windows\ModuleManager\ModuleManager.h">

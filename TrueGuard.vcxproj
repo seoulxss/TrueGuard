@@ -209,7 +209,7 @@
     <None Include="README.md" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="ext\xorstr.h" />
+    <ClInclude Include="ext\XorStr\xorstr.h" />
     <ClInclude Include="src\Windows\MemoryAccessor\MemoryAccessor.h" />
     <ClInclude Include="src\Windows\ntdll.h" />
     <ClInclude Include="src\Wrapper\Hashing.h" />

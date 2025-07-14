@@ -6,6 +6,9 @@ MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "TrueGuard", "TrueGuard.vcxproj", "{772F936F-C943-4D08-98A7-684B93DB3F75}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "TestTG", "..\TestTG\TestTG.vcxproj", "{EAA28FAB-1B8C-4C2B-8477-FF35EA8F84C6}"
+	ProjectSection(ProjectDependencies) = postProject
+		{772F936F-C943-4D08-98A7-684B93DB3F75} = {772F936F-C943-4D08-98A7-684B93DB3F75}
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
