@@ -1,12 +1,15 @@
-#include <Windows.h>
+#include "Windows/ModuleManager/ModuleManager.h"
 
 void wmain(HMODULE hMod)
 {
-
+  TG::Windows::ModuleManager mod(nullptr);
 
 
     FreeLibraryAndExitThread(hMod, 0);
 }
+
+
+//initialize_onexit_table
 
 BOOL APIENTRY DllMain( HMODULE hModule,
                        DWORD  ul_reason_for_call,
