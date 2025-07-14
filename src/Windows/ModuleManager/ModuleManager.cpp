@@ -6,11 +6,9 @@
 #include <algorithm>
 
 #include <SoftPub.h>
-#include <wincrypt.h>
-#include <wintrust.h>
 #pragma comment(lib, "wintrust.lib")
 
-TG::Windows::Module::Module(LIST_ENTRY* Entry, LDR_DATA_TABLE_ENTRY* DataTable, std::wstring DllName, std::shared_ptr<HookManager> HookManager) : m_pDataTableEntry(DataTable), m_pEntry(Entry), m_PEHeader(this, HookManager), m_pHookManager(HookManager)
+TG::Windows::Module::Module(LIST_ENTRY* Entry, Ntdll::LDR_DATA_TABLE_ENTRY* DataTable, std::wstring DllName, std::shared_ptr<HookManager> HookManager) : m_pDataTableEntry(DataTable), m_pEntry(Entry), m_PEHeader(this, HookManager), m_pHookManager(HookManager)
 {
 	if (!DataTable)
 		throw std::runtime_error(xorstr_("Error parsing DataTable!"));
@@ -130,13 +128,13 @@ std::expected<bool, TG::TG_STATUS> TG::Windows::Module::HasModulePEHeader()
 
 std::expected<bool, TG::TG_STATUS> TG::Windows::Module::IsModuleInPEBList()
 {
-	PEB* peb = NtCurrentPeb();
+	Ntdll::PEB* peb = Ntdll::NtCurrentPeb();
 	auto entry = &peb->Ldr->InInitializationOrderModuleList;
 
 	auto next = entry->Flink;
 	while (entry != next)
 	{
-		auto dll = CONTAINING_RECORD(next, LDR_DATA_TABLE_ENTRY, InInitializationOrderLinks);
+		auto dll = CONTAINING_RECORD(next, Ntdll::LDR_DATA_TABLE_ENTRY, InInitializationOrderLinks);
 		if (dll == m_pDataTableEntry)
 		{
 			return true;
@@ -148,7 +146,7 @@ std::expected<bool, TG::TG_STATUS> TG::Windows::Module::IsModuleInPEBList()
 	return false;
 }
 
-std::expected<LDR_DATA_TABLE_ENTRY*, TG::TG_STATUS> TG::Windows::Module::GetDataTableEntry()
+std::expected<Ntdll::LDR_DATA_TABLE_ENTRY*, TG::TG_STATUS> TG::Windows::Module::GetDataTableEntry()
 {
 	if (m_pDataTableEntry)
 		return m_pDataTableEntry;
@@ -156,17 +154,27 @@ std::expected<LDR_DATA_TABLE_ENTRY*, TG::TG_STATUS> TG::Windows::Module::GetData
 	return std::unexpected<TG_STATUS>(TG_STATUS::ERROR);
 }
 
+const TG::Windows::PEHeader& TG::Windows::Module::GetPEHeader() const
+{
+	return m_PEHeader;
+}
+
+TG::Windows::PEHeader& TG::Windows::Module::GetPEHeader()
+{
+	return m_PEHeader;
+}
+
 TG::Windows::ModuleManager::ModuleManager(std::shared_ptr<HookManager> pHookManager)
 {
 	m_Modules.reserve(300);
 
-	PEB* peb = NtCurrentPeb();
+	Ntdll::PEB* peb = Ntdll::NtCurrentPeb();
 	auto entry = &peb->Ldr->InInitializationOrderModuleList;
 
 	auto next = entry->Flink;
 	while (entry != next)
 	{
-		auto dll = CONTAINING_RECORD(next, LDR_DATA_TABLE_ENTRY, InInitializationOrderLinks);
+		auto dll = CONTAINING_RECORD(next, Ntdll::LDR_DATA_TABLE_ENTRY, InInitializationOrderLinks);
 		if (dll)
 		{
 			std::wstring dllname = dll->BaseDllName.Buffer;

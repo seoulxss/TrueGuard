@@ -25,7 +25,7 @@ namespace TG::Windows
 	class Module
 	{
 	public:
-		Module(LIST_ENTRY* Entry, LDR_DATA_TABLE_ENTRY* DataTable, std::wstring DllName, std::shared_ptr<HookManager> pHookManager);
+		Module(LIST_ENTRY* Entry, Ntdll::LDR_DATA_TABLE_ENTRY* DataTable, std::wstring DllName, std::shared_ptr<HookManager> pHookManager);
 
 
 
@@ -67,10 +67,14 @@ namespace TG::Windows
 
 		/*						Getters							*/
 
-		std::expected<LDR_DATA_TABLE_ENTRY*, TG_STATUS> GetDataTableEntry();
+		std::expected<Ntdll::LDR_DATA_TABLE_ENTRY*, TG_STATUS> GetDataTableEntry();
+
+		[[nodiscard]] const PEHeader& GetPEHeader() const;
+
+		PEHeader& GetPEHeader();
 
 	private:
-		LDR_DATA_TABLE_ENTRY* m_pDataTableEntry = nullptr;
+		Ntdll::LDR_DATA_TABLE_ENTRY* m_pDataTableEntry = nullptr;
 		std::wstring m_ModuleName = {};
 		std::wstring m_ModulePath = {};
 
@@ -86,7 +90,7 @@ namespace TG::Windows
 	class ModuleManager
 	{
 	public:
-		ModuleManager(std::shared_ptr<HookManager> pHookManager);
+		explicit ModuleManager(std::shared_ptr<HookManager> pHookManager);
 
 		//! 
 		//! @return The map which contains all the loaded modules
@@ -128,5 +132,9 @@ namespace TG::Windows
 		std::shared_ptr<HookManager> m_pHookManager = nullptr;
 	};
 
+}
 
+namespace TG::Globals
+{
+	inline std::shared_ptr<Windows::ModuleManager> g_pModuleManager = nullptr;
 }
