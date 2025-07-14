@@ -196,6 +196,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="src\Windows\HookManager\HookDefs.cpp" />
     <ClCompile Include="src\Windows\MemoryAccessor\MemoryAccessor.cpp" />
     <ClCompile Include="src\Wrapper\Hashing.cpp" />
     <ClCompile Include="src\Windows\PEHeader\PEHeader.cpp" />
@@ -210,6 +211,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ext\XorStr\xorstr.h" />
+    <ClInclude Include="src\Windows\HookManager\HookDefs.h" />
     <ClInclude Include="src\Windows\MemoryAccessor\MemoryAccessor.h" />
     <ClInclude Include="src\Windows\ntdll.h" />
     <ClInclude Include="src\Wrapper\Hashing.h" />

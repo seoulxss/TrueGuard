@@ -33,6 +33,9 @@
     <ClCompile Include="src\Windows\MemoryAccessor\MemoryAccessor.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\Windows\HookManager\HookDefs.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="README.md" />
@@ -62,6 +65,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\Windows\ntdll.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Windows\HookManager\HookDefs.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
