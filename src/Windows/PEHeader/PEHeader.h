@@ -1,6 +1,5 @@
 #pragma once
 #include <memory>
-
 #include "../../Definitions.h"
 
 namespace TG::Windows
@@ -16,7 +15,7 @@ namespace TG::Windows
 		//! GetProcAddress
 		//! @param funcName The functions to search
 		//! @return The pointer to the func or an error value
-		std::expected<std::uintptr_t*, TG_STATUS> GetProcAddress(const std::string& funcName) const;
+		[[nodiscard]] std::expected<std::uintptr_t*, TG_STATUS> GetProcAddress(const std::string& funcName) const;
 
 		//! 
 		//! @return The pointer to the IMAGE_NT_HEADERS or an error value
@@ -44,7 +43,7 @@ namespace TG::Windows
 
 		//! Checks if the file is valid (PE Header)
 		//! @return True if it is, false of not, or an error value
-		std::expected<bool, TG_STATUS> IsValidFile() const;
+		[[nodiscard]] std::expected<bool, TG_STATUS> IsValidFile() const;
 
 		//! Returns the original .test hash at init
 		//! @return Vector of the orig hash value
@@ -55,6 +54,7 @@ namespace TG::Windows
 		IMAGE_DOS_HEADER* m_pDosHeader = nullptr;
 		TG::Windows::Module* m_pModule = nullptr;
 		std::shared_ptr<HookManager> m_pHookManager = nullptr;
+
 		std::vector<std::uint8_t> m_oHashOfTextSection = {};
 
 		IMAGE_SECTION_HEADER* GetSectionHeader(const std::wstring& sectionName);
