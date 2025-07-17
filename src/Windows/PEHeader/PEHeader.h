@@ -1,6 +1,10 @@
 #pragma once
 #include <memory>
+#include <mutex>
+#include <shared_mutex>
+
 #include "../../Definitions.h"
+
 
 namespace TG::Windows
 {
@@ -48,14 +52,24 @@ namespace TG::Windows
 		//! Returns the original .test hash at init
 		//! @return Vector of the orig hash value
 		[[nodiscard]] const std::vector<std::uint8_t>& GetOrigHashOfText() const;
+
+		//! Gets the image size with the PE-Format
+		//! @return The Image size or an error value
+		std::expected<std::size_t, TG_STATUS> GetImageSize() const;
+
+		//! Gets the start addr with the PE-Format
+		//! @return The start addr  or an error value
+		std::expected<std::uintptr_t*, TG_STATUS> GetStartAddr();
+
+
 	private:
 		IMAGE_NT_HEADERS* m_pNtHeaders = nullptr;
 		IMAGE_OPTIONAL_HEADER* m_pOptionalHeader = nullptr;
 		IMAGE_DOS_HEADER* m_pDosHeader = nullptr;
 		TG::Windows::Module* m_pModule = nullptr;
 		std::shared_ptr<HookManager> m_pHookManager = nullptr;
-
 		std::vector<std::uint8_t> m_oHashOfTextSection = {};
+		mutable std::shared_mutex m_Mutex;
 
 		IMAGE_SECTION_HEADER* GetSectionHeader(const std::wstring& sectionName);
 	};

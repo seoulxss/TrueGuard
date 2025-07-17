@@ -1,6 +1,7 @@
 #include "PEHeader.h"
 #include <stdexcept>
 #include "../../Wrapper/Hashing.h"
+#include "../HookManager/HookManager.h"
 #include "../ModuleManager/ModuleManager.h"
 
 TG::Windows::PEHeader::PEHeader(Module* pModule, const std::shared_ptr<HookManager>& HookManager) : m_pModule(pModule), m_pHookManager(HookManager)
@@ -109,6 +110,7 @@ std::expected<std::vector<std::uint8_t>, TG::TG_STATUS> TG::Windows::PEHeader::G
 	auto size = GetTextSectionSize();
 	auto start = GetTextSection();
 
+	std::lock_guard lock(m_Mutex);
 	if (!size.has_value())
 		return std::unexpected<TG::TG_STATUS>(size.error());
 
@@ -116,9 +118,10 @@ std::expected<std::vector<std::uint8_t>, TG::TG_STATUS> TG::Windows::PEHeader::G
 		return std::unexpected<TG::TG_STATUS>(start.error());
 
 	//Disable hooks if any are there!
-
+	m_pHookManager->UnHookAll();
 	hasher.Update(start.value(), size.value());
 	auto hash = hasher.Finalize();
+	m_pHookManager->HookAll();
 	return hash;
 }
 
@@ -141,8 +144,27 @@ const std::vector<std::uint8_t>& TG::Windows::PEHeader::GetOrigHashOfText() cons
 	return m_oHashOfTextSection;
 }
 
+std::expected<std::size_t, TG::TG_STATUS> TG::Windows::PEHeader::GetImageSize() const
+{
+	if (!m_pDosHeader or !m_pNtHeaders or !m_pOptionalHeader)
+		return std::unexpected(TG_STATUS::NULL_PTR);
+
+	return static_cast<std::size_t>(m_pOptionalHeader->SizeOfImage);
+}
+
+std::expected<std::uintptr_t*, TG::TG_STATUS> TG::Windows::PEHeader::GetStartAddr()
+{
+	if (!m_pDosHeader or !m_pNtHeaders or !m_pOptionalHeader)
+		return std::unexpected(TG_STATUS::NULL_PTR);
+
+	return reinterpret_cast<std::uintptr_t*>(m_pOptionalHeader->ImageBase);
+}
+
 IMAGE_SECTION_HEADER* TG::Windows::PEHeader::GetSectionHeader(const std::wstring& sectionName)
 {
+	if (!m_pNtHeaders)
+		return nullptr;
+
 	auto sec = (std::string(sectionName.begin(), sectionName.end()));
 
 	auto section = IMAGE_FIRST_SECTION(m_pNtHeaders);
