@@ -89,6 +89,16 @@ void TG::Windows::DetHook::UnHookFunction()
 	}
 }
 
+TG::Windows::HookManager::~HookManager()
+{
+	//First unhook protect, then Alloc
+	m_Hooks.find(HOOK_IDENTIFIER::NT_PROTECT_VIRTUAL_MEMORY)->second->UnHookFunction();
+	m_Hooks.find(HOOK_IDENTIFIER::NT_ALLOCATE_VIRTUAL_MEMORY)->second->UnHookFunction();
+
+	for (auto& val : m_Hooks | std::views::values)
+		val.reset();
+}
+
 void TG::Windows::HookManager::HookAll() const
 {
 	for (const auto& val : m_Hooks | std::views::values)

@@ -4,16 +4,25 @@
 #include <polyhook2/PE/IatHook.hpp>
 
 #include "HookDefs.h"
+#include "../ModuleManager/ModuleManager.h"
+#include "../PEHeader/PEHeader.h"
 
 
 namespace TG::Windows
 {
-	class ModuleManager;
 
 	enum class HOOK_IDENTIFIER : std::uint8_t
 	{
-		LDR_GET_DLL_HANDLE,   //So we can catch GetModuleHandleW etc...
+		LDR_GET_DLL_HANDLE, //So we can catch GetModuleHandleW etc...
+		LDR_LOAD_DLL, //Catch LoadLibrary etc..
 
+		NT_ALLOCATE_VIRTUAL_MEMORY,
+		NT_ALLOCATE_VIRTUAL_MEMORY_EX,
+
+		NT_PROTECT_VIRTUAL_MEMORY,
+		NT_QUERY_VIRTUAL_MEMORY,
+
+		BASE_THREAD_INIT_THUNK,
 	};
 
 	class Hook
@@ -22,8 +31,8 @@ namespace TG::Windows
 		virtual ~Hook() = default;
 		virtual void HookFunction() = 0;
 		virtual void UnHookFunction() = 0;
-		virtual std::uint64_t GetTrampoline() const = 0;
-		[[nodiscard]]  virtual bool IsHooked() const = 0;
+		[[nodiscard]] virtual std::uint64_t GetTrampoline() const = 0;
+		[[nodiscard]] virtual bool IsHooked() const = 0;
 
 	protected:
 		bool m_isHooked = false;
@@ -170,15 +179,29 @@ namespace TG::Windows
 	public:
 		HookManager()
 		{
-			AddHook(HOOK_IDENTIFIER::LDR_GET_DLL_HANDLE, std::make_unique<EATHook>(("LdrGetDllHandle"), L"ntdll.dll", reinterpret_cast<std::uint64_t>(Hooks::Functions::LDR_GET_DLL_HANDLE::HkLdrGetDllHandle)));
+			//We create a temporary ModuleManager (This is so uselessly espensive..)
+			ModuleManager manager(this);
 
-			HookAll();
+			//Ldr
+			AddHook(HOOK_IDENTIFIER::LDR_GET_DLL_HANDLE, std::make_unique<DetHook>(reinterpret_cast<std::uint64_t>(manager.GetModule(xorstr_(L"ntdll.dll")).value()->GetPEHeader().GetProcAddress(xorstr_("LdrGetDllHandle")).value()), reinterpret_cast<std::uint64_t>(&Hooks::Functions::LdrGetDllHandle::HkLdrGetDllHandle)));
+			AddHook(HOOK_IDENTIFIER::LDR_LOAD_DLL, std::make_unique<DetHook>(reinterpret_cast<std::uint64_t>(manager.GetModule(xorstr_(L"ntdll.dll")).value()->GetPEHeader().GetProcAddress(xorstr_("LdrLoadDll")).value()), reinterpret_cast<std::uint64_t>(&Hooks::Functions::LdrLoadDll::HkLdrLoadDll)));
+
+			//Kernel32
+			AddHook(HOOK_IDENTIFIER::BASE_THREAD_INIT_THUNK, std::make_unique<DetHook>(reinterpret_cast<std::uint64_t>(manager.GetModule(xorstr_(L"kernel32.dll")).value()->GetPEHeader().GetProcAddress(xorstr_("BaseThreadInitThunk")).value()), reinterpret_cast<std::uint64_t>(&Hooks::Functions::BASE_THREAD_INIT_THUNK::HkBaseThreadInitThunk)));
+
+			//Nt
+			AddHook(HOOK_IDENTIFIER::NT_PROTECT_VIRTUAL_MEMORY, std::make_unique<DetHook>(reinterpret_cast<std::uint64_t>(manager.GetModule(xorstr_(L"ntdll.dll")).value()->GetPEHeader().GetProcAddress(xorstr_("NtProtectVirtualMemory")).value()), reinterpret_cast<std::uint64_t>(&Hooks::Functions::NtProtectVirtualMemory::HkNtProtectVirtualMemory)));
+			AddHook(HOOK_IDENTIFIER::NT_QUERY_VIRTUAL_MEMORY, std::make_unique<DetHook>(reinterpret_cast<std::uint64_t>(manager.GetModule(xorstr_(L"ntdll.dll")).value()->GetPEHeader().GetProcAddress(xorstr_("NtQueryVirtualMemory")).value()), reinterpret_cast<std::uint64_t>(&Hooks::Functions::NtQueryVirtualMemory::HkNtQueryVirtualMemory)));
+			AddHook(HOOK_IDENTIFIER::NT_ALLOCATE_VIRTUAL_MEMORY, std::make_unique<DetHook>(reinterpret_cast<std::uint64_t>(manager.GetModule(xorstr_(L"ntdll.dll")).value()->GetPEHeader().GetProcAddress(xorstr_("NtAllocateVirtualMemory")).value()), reinterpret_cast<std::uint64_t>(&Hooks::Functions::NtAllocateVirtualMemory::HkNtAllocateVirtualMemory)));
+			AddHook(HOOK_IDENTIFIER::NT_ALLOCATE_VIRTUAL_MEMORY_EX, std::make_unique<DetHook>(reinterpret_cast<std::uint64_t>(manager.GetModule(xorstr_(L"ntdll.dll")).value()->GetPEHeader().GetProcAddress(xorstr_("NtAllocateVirtualMemoryEx")).value()), reinterpret_cast<std::uint64_t>(&Hooks::Functions::NtAllocateVirtualMemoryEx::HkAllocateVirtualMemoryEx)));
 		}
+
+		~HookManager();
 
 		template<typename HookType>
 		void AddHook(HOOK_IDENTIFIER id, std::unique_ptr<HookType> hook)
 		{
-			m_Hooks.try_emplace(id, hook);
+			m_Hooks.try_emplace(id, std::move(hook));
 		}
 
 		void HookAll() const;
@@ -188,7 +211,7 @@ namespace TG::Windows
 		[[nodiscard]] const Hook* GetHook(HOOK_IDENTIFIER id) const;
 
 	private:
-		std::unordered_map<HOOK_IDENTIFIER, std::unique_ptr<Hook>> m_Hooks;
+		std::unordered_map<HOOK_IDENTIFIER, std::unique_ptr<Hook>, XXHash> m_Hooks;
 	};
 }
 
