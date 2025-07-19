@@ -199,6 +199,7 @@
   <ItemGroup>
     <ClCompile Include="src\Windows\HookManager\HookDefs.cpp" />
     <ClCompile Include="src\Windows\MemoryAccessor\MemoryAccessor.cpp" />
+    <ClCompile Include="LICENSE" />
     <ClCompile Include="src\Wrapper\Hashing.cpp" />
     <ClCompile Include="src\Windows\PEHeader\PEHeader.cpp" />
     <ClCompile Include="src\Windows\HookManager\HookManager.cpp" />

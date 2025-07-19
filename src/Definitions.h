@@ -1,4 +1,5 @@
 ﻿#pragma once
+#include <Windows.h>
 #include <string>
 #include <expected>
 #include <vector>
@@ -29,11 +30,6 @@ namespace TG
 		NO_EXPORT_DIRECTORY,
 		NO_IMPORT_DIRECTORY,
 		FUNCTION_NOT_FOUND,
-
-
-
-
-
 	};
 
 
