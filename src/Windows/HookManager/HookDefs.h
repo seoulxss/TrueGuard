@@ -3,6 +3,7 @@
 #include <cmath>
 #include <windows.h>
 #include "../ntdll.h"
+#include "TlHelp32.h"
 
 namespace TG::Hooks::Functions
 {
@@ -50,6 +51,16 @@ namespace TG::Hooks::Functions
 		Ntdll::NTSTATUS NTAPI HkAllocateVirtualMemoryEx(_In_ HANDLE ProcessHandle, _Inout_ _At_(*BaseAddress, _Readable_bytes_(*RegionSize) _Writable_bytes_(*RegionSize) _Post_readable_byte_size_(*RegionSize)) PVOID* BaseAddress, _Inout_ PSIZE_T RegionSize, _In_ ULONG AllocationType, _In_ ULONG PageProtection, _Inout_updates_opt_(ExtendedParameterCount) PMEM_EXTENDED_PARAMETER ExtendedParameters, _In_ ULONG ExtendedParameterCount);
 	}
 
+	namespace Module32FirstW
+	{
+		using tModule32FirstW = BOOL(WINAPI*)(HANDLE hSnap, MODULEENTRY32W* pEntry);
+		BOOL WINAPI HkModule32FirstW(HANDLE hSnap, MODULEENTRY32W* pEntry);
+	}
 
+	namespace Module32NextW
+	{
+		using tModule32NextW = BOOL(WINAPI*)(HANDLE hSnap, MODULEENTRY32W* pEntry);
+		BOOL WINAPI HkModule32NextW(HANDLE hSnap, MODULEENTRY32W* pEntry);
+	}
 
 }

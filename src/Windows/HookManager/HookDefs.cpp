@@ -47,3 +47,13 @@ void WINAPI TG::Hooks::Functions::BASE_THREAD_INIT_THUNK::HkBaseThreadInitThunk(
 {
 	return reinterpret_cast<tBaseThreadInitThunk>(Globals::g_pHookManager->GetHook(Windows::HOOK_IDENTIFIER::BASE_THREAD_INIT_THUNK)->GetTrampoline())(LdrReserved, StartAddr, lpParameter);
 }
+
+BOOL TG::Hooks::Functions::Module32FirstW::HkModule32FirstW(HANDLE hSnap, MODULEENTRY32W* pEntry)
+{
+	return reinterpret_cast<tModule32FirstW>(Globals::g_pHookManager->GetHook(Windows::HOOK_IDENTIFIER::MODULE_32_FIRST_W)->GetTrampoline())(hSnap, pEntry);
+}
+
+BOOL TG::Hooks::Functions::Module32NextW::HkModule32NextW(HANDLE hSnap, MODULEENTRY32W* pEntry)
+{
+	return reinterpret_cast<tModule32NextW>(Globals::g_pHookManager->GetHook(Windows::HOOK_IDENTIFIER::MODULE_32_NEXT_W)->GetTrampoline())(hSnap, pEntry);
+}

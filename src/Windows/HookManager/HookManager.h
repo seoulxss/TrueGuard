@@ -23,6 +23,9 @@ namespace TG::Windows
 		NT_QUERY_VIRTUAL_MEMORY,
 
 		BASE_THREAD_INIT_THUNK,
+
+		MODULE_32_FIRST_W,
+		MODULE_32_NEXT_W,
 	};
 
 	class Hook
@@ -182,12 +185,14 @@ namespace TG::Windows
 			//We create a temporary ModuleManager (This is so uselessly espensive..)
 			ModuleManager manager(nullptr);
 
-			//Ldr
+			//Nt (Ldr)
 			AddHook(HOOK_IDENTIFIER::LDR_GET_DLL_HANDLE, std::make_unique<DetHook>(reinterpret_cast<std::uint64_t>(manager.GetModule(xorstr_(L"ntdll.dll")).value()->GetPEHeader().GetProcAddress(xorstr_("LdrGetDllHandle")).value()), reinterpret_cast<std::uint64_t>(&Hooks::Functions::LdrGetDllHandle::HkLdrGetDllHandle)));
 			AddHook(HOOK_IDENTIFIER::LDR_LOAD_DLL, std::make_unique<DetHook>(reinterpret_cast<std::uint64_t>(manager.GetModule(xorstr_(L"ntdll.dll")).value()->GetPEHeader().GetProcAddress(xorstr_("LdrLoadDll")).value()), reinterpret_cast<std::uint64_t>(&Hooks::Functions::LdrLoadDll::HkLdrLoadDll)));
 
 			//Kernel32
 			AddHook(HOOK_IDENTIFIER::BASE_THREAD_INIT_THUNK, std::make_unique<DetHook>(reinterpret_cast<std::uint64_t>(manager.GetModule(xorstr_(L"kernel32.dll")).value()->GetPEHeader().GetProcAddress(xorstr_("BaseThreadInitThunk")).value()), reinterpret_cast<std::uint64_t>(&Hooks::Functions::BASE_THREAD_INIT_THUNK::HkBaseThreadInitThunk)));
+			AddHook(HOOK_IDENTIFIER::MODULE_32_FIRST_W, std::make_unique<DetHook>(reinterpret_cast<std::uint64_t>(manager.GetModule(xorstr_(L"kernel32.dll")).value()->GetPEHeader().GetProcAddress(xorstr_("Module32FirstW")).value()), reinterpret_cast<std::uint64_t>(&Hooks::Functions::Module32FirstW::HkModule32FirstW)));
+			AddHook(HOOK_IDENTIFIER::MODULE_32_NEXT_W, std::make_unique<DetHook>(reinterpret_cast<std::uint64_t>(manager.GetModule(xorstr_(L"kernel32.dll")).value()->GetPEHeader().GetProcAddress(xorstr_("Module32NextW")).value()), reinterpret_cast<std::uint64_t>(&Hooks::Functions::Module32NextW::HkModule32NextW)));
 
 			//Nt
 			AddHook(HOOK_IDENTIFIER::NT_PROTECT_VIRTUAL_MEMORY, std::make_unique<DetHook>(reinterpret_cast<std::uint64_t>(manager.GetModule(xorstr_(L"ntdll.dll")).value()->GetPEHeader().GetProcAddress(xorstr_("NtProtectVirtualMemory")).value()), reinterpret_cast<std::uint64_t>(&Hooks::Functions::NtProtectVirtualMemory::HkNtProtectVirtualMemory)));
