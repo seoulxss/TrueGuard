@@ -14,7 +14,10 @@ namespace TG::Windows
 	class PEHeader
 	{
 	public:
-		explicit PEHeader(Module* pModule, const std::shared_ptr<HookManager>& HookManager);
+		using DllBase = std::uintptr_t;
+
+		explicit PEHeader(Module* pModule, std::shared_ptr<HookManager> HookManager);
+		explicit PEHeader(std::uintptr_t* Dos, std::shared_ptr<HookManager> HookManager);
 
 		//! GetProcAddress
 		//! @param funcName The functions to search
@@ -63,6 +66,7 @@ namespace TG::Windows
 
 
 	private:
+		DllBase m_DllBase = 0;
 		IMAGE_NT_HEADERS* m_pNtHeaders = nullptr;
 		IMAGE_OPTIONAL_HEADER* m_pOptionalHeader = nullptr;
 		IMAGE_DOS_HEADER* m_pDosHeader = nullptr;

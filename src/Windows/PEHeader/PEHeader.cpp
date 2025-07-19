@@ -3,29 +3,49 @@
 #include "../../Wrapper/Hashing.h"
 #include "../HookManager/HookManager.h"
 #include "../ModuleManager/ModuleManager.h"
+#include <future>
 
-TG::Windows::PEHeader::PEHeader(Module* pModule, const std::shared_ptr<HookManager>& HookManager) : m_pModule(pModule), m_pHookManager(HookManager)
+TG::Windows::PEHeader::PEHeader(Module* pModule, std::shared_ptr<HookManager> HookManager) : m_pModule(pModule), m_pHookManager(HookManager)
 {
 	if (!pModule or !pModule->GetDataTableEntry().has_value())
 		throw std::runtime_error("");
 
-	m_pDosHeader = reinterpret_cast<IMAGE_DOS_HEADER*>(pModule->GetDataTableEntry().value()->DllBase);
+	m_pDosHeader = static_cast<IMAGE_DOS_HEADER*>(pModule->GetDataTableEntry().value()->DllBase);
 	if (!m_pDosHeader)
 		return;
 
 	m_pNtHeaders = reinterpret_cast<IMAGE_NT_HEADERS*>(reinterpret_cast<std::byte*>(m_pDosHeader) + m_pDosHeader->e_lfanew);
 	m_pOptionalHeader = &m_pNtHeaders->OptionalHeader;
 
-	m_oHashOfTextSection = GetHashOfTextSection().value();
+	m_DllBase = reinterpret_cast<DllBase>(pModule->GetDataTableEntry().value()->DllBase);
+
+	if (!m_pHookManager)
+		m_pHookManager = HookManager;
+
+	GetHashOfTextSection();
+}
+
+TG::Windows::PEHeader::PEHeader(std::uintptr_t* Dos, std::shared_ptr<HookManager> HookManager) : m_pModule(nullptr), m_pHookManager(HookManager)
+{
+	m_pDosHeader = reinterpret_cast<IMAGE_DOS_HEADER*>(Dos);
+	if (!m_pDosHeader)
+		return;
+
+	m_DllBase = reinterpret_cast<DllBase>(Dos);
+
+	m_pNtHeaders = reinterpret_cast<IMAGE_NT_HEADERS*>(reinterpret_cast<std::byte*>(m_pDosHeader) + m_pDosHeader->e_lfanew);
+	m_pOptionalHeader = &m_pNtHeaders->OptionalHeader;
+
+	GetHashOfTextSection();
 }
 
 std::expected<std::uintptr_t*, TG::TG_STATUS> TG::Windows::PEHeader::GetProcAddress(const std::string& funcName) const
 {
-	auto dataTable = m_pModule->GetDataTableEntry();
-	if (!dataTable.has_value()) 
-		return std::unexpected(TG_STATUS::NULL_PTR);
-	
-	auto* baseAddress = static_cast<std::byte*>(dataTable.value()->DllBase);
+
+	if (m_DllBase == 0)
+		return std::unexpected(TG_STATUS::ERROR);
+
+	auto* baseAddress = reinterpret_cast<std::byte*>(m_DllBase);
 
 	auto& exportDir = m_pNtHeaders->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_EXPORT];
 	if (exportDir.VirtualAddress == 0 || exportDir.Size == 0) 
@@ -89,7 +109,7 @@ std::expected<std::uintptr_t*, TG::TG_STATUS> TG::Windows::PEHeader::GetTextSect
 	if (!sectionHeader)
 		return std::unexpected<TG_STATUS>(TG_STATUS::NO_SECTION_FOUND);
 
-	return reinterpret_cast<std::uintptr_t*>(static_cast<std::byte*>(m_pModule->GetDataTableEntry().value()->DllBase) + sectionHeader->VirtualAddress);
+	return reinterpret_cast<std::uintptr_t*>(reinterpret_cast<std::byte*>(m_DllBase) + sectionHeader->VirtualAddress);
 }
 
 std::expected<std::size_t, TG::TG_STATUS> TG::Windows::PEHeader::GetTextSectionSize()
@@ -118,10 +138,23 @@ std::expected<std::vector<std::uint8_t>, TG::TG_STATUS> TG::Windows::PEHeader::G
 		return std::unexpected<TG::TG_STATUS>(start.error());
 
 	//Disable hooks if any are there!
-	m_pHookManager->UnHookAll();
-	hasher.Update(start.value(), size.value());
+	if (m_pHookManager)
+	{
+		m_pHookManager->UnHookAll();
+		hasher.Update(start.value(), size.value());
+		m_pHookManager->HookAll();
+	}
+
+	else
+	{
+		hasher.Update(start.value(), size.value());
+	}
+
 	auto hash = hasher.Finalize();
-	m_pHookManager->HookAll();
+
+	if (m_oHashOfTextSection.empty())
+		m_oHashOfTextSection = hash;
+
 	return hash;
 }
 
