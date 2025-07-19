@@ -180,7 +180,7 @@ namespace TG::Windows
 		HookManager()
 		{
 			//We create a temporary ModuleManager (This is so uselessly espensive..)
-			ModuleManager manager(this);
+			ModuleManager manager(nullptr);
 
 			//Ldr
 			AddHook(HOOK_IDENTIFIER::LDR_GET_DLL_HANDLE, std::make_unique<DetHook>(reinterpret_cast<std::uint64_t>(manager.GetModule(xorstr_(L"ntdll.dll")).value()->GetPEHeader().GetProcAddress(xorstr_("LdrGetDllHandle")).value()), reinterpret_cast<std::uint64_t>(&Hooks::Functions::LdrGetDllHandle::HkLdrGetDllHandle)));

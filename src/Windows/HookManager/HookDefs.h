@@ -6,6 +6,8 @@
 
 namespace TG::Hooks::Functions
 {
+	//initialize_onexit_table
+
 	namespace LdrGetDllHandle
 	{
 		using tLdrGetDllHandle = Ntdll::NTSTATUS(NTAPI*)(_In_opt_ PCWSTR DllPath, _In_opt_ PULONG DllCharacteristics, _In_ Ntdll::PCUNICODE_STRING DllName, _Out_ PVOID* DllHandle);
