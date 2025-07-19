@@ -8,12 +8,16 @@
 #include <SoftPub.h>
 #pragma comment(lib, "wintrust.lib")
 
+TG::Windows::HiddenModule::HiddenModule(std::uintptr_t StartAddr, bool IsPE, std::shared_ptr<HookManager> pHookManager)
+{
+	if (IsPE)
+		m_pPEHeader = std::make_unique<PEHeader>(reinterpret_cast<std::uintptr_t*>(StartAddr), pHookManager);
+}
+
 TG::Windows::Module::Module(LIST_ENTRY* Entry, Ntdll::LDR_DATA_TABLE_ENTRY* DataTable, std::wstring DllName, std::shared_ptr<HookManager> HookManager) : m_pDataTableEntry(DataTable), m_pEntry(Entry), m_PEHeader(this, HookManager), m_pHookManager(HookManager)
 {
 	if (!DataTable)
 		throw std::runtime_error(xorstr_("Error parsing DataTable!"));
-
-		this->IsModuleSigned();
 }
 
 std::expected<bool, TG::TG_STATUS> TG::Windows::Module::HideModuleFromPEBList()
@@ -159,12 +163,22 @@ const TG::Windows::PEHeader& TG::Windows::Module::GetPEHeader() const
 	return m_PEHeader;
 }
 
+bool TG::Windows::Module::GetSuspicious() const
+{
+	return m_IsSuspicious;
+}
+
 TG::Windows::PEHeader& TG::Windows::Module::GetPEHeader()
 {
 	return m_PEHeader;
 }
 
-TG::Windows::ModuleManager::ModuleManager(std::shared_ptr<HookManager> pHookManager)
+void TG::Windows::Module::SetSuspicious(bool val)
+{
+	m_IsSuspicious = val;
+}
+
+TG::Windows::ModuleManager::ModuleManager(std::shared_ptr<HookManager> pHookManager) : m_pHookManager(pHookManager)
 {
 	m_Modules.reserve(300);
 
@@ -189,6 +203,124 @@ TG::Windows::ModuleManager::ModuleManager(std::shared_ptr<HookManager> pHookMana
 
 		next = next->Flink;
 	}
+}
+
+TG::Windows::ModuleManager::ModuleManager(HookManager* TempManager) : m_pHookManager(TempManager)
+{
+	m_Modules.reserve(300);
+
+	Ntdll::PEB* peb = Ntdll::NtCurrentPeb();
+	auto entry = &peb->Ldr->InInitializationOrderModuleList;
+
+	auto next = entry->Flink;
+	while (entry != next)
+	{
+		auto dll = CONTAINING_RECORD(next, Ntdll::LDR_DATA_TABLE_ENTRY, InInitializationOrderLinks);
+		if (dll)
+		{
+			std::wstring dllname = dll->BaseDllName.Buffer;
+			std::ranges::transform(dllname, dllname.begin(), [&](const wchar_t c)
+				{
+					return std::tolower(c);
+				}
+			);
+
+			m_Modules.try_emplace(dllname, next, dll, dllname, m_pHookManager);
+		}
+
+		next = next->Flink;
+	}
+}
+
+std::expected<std::vector<TG::Windows::Module*>, TG::TG_STATUS> TG::Windows::ModuleManager::RescanModules()
+{
+	std::vector<Module*> NewMods;
+	NewMods.reserve(10);
+
+	Ntdll::PEB* peb = Ntdll::NtCurrentPeb();
+	auto entry = &peb->Ldr->InInitializationOrderModuleList;
+
+	auto next = entry->Flink;
+	while (entry != next)
+	{
+		auto dll = CONTAINING_RECORD(next, Ntdll::LDR_DATA_TABLE_ENTRY, InInitializationOrderLinks);
+		if (dll)
+		{
+			std::wstring dllname = dll->BaseDllName.Buffer;
+			std::ranges::transform(dllname, dllname.begin(), [&](const wchar_t c)
+				{
+					return std::tolower(c);
+				}
+			);
+
+			auto it = m_Modules.find(dllname);
+			if (it == m_Modules.end())
+			{
+				auto pair = m_Modules.try_emplace(dllname, next, dll, dllname, m_pHookManager);
+				NewMods.emplace_back(&pair.first->second);
+			}
+		}
+
+		next = next->Flink;
+	}
+
+	if (NewMods.empty())
+		return std::unexpected(TG_STATUS::NOT_FOUND);
+
+	return NewMods;
+}
+
+std::expected<std::vector<TG::Windows::HiddenModule*>, TG::TG_STATUS> TG::Windows::ModuleManager::RescanHiddenModules()
+{
+	std::uintptr_t* pAddr = nullptr;
+	MEMORY_BASIC_INFORMATION mbi{};
+	auto it = m_Modules.find(xorstr_(L"ntdll.dll"));
+	if (it == m_Modules.end())
+		return std::unexpected(TG_STATUS::NOT_FOUND);
+
+	using tNtQueryVirtualMemory = Ntdll::NTSTATUS(NTAPI*)(_In_ HANDLE ProcessHandle, _In_opt_ PVOID BaseAddress, _In_ Ntdll::MEMORY_INFORMATION_CLASS MemoryInformationClass, _Out_writes_bytes_(MemoryInformationLength) PVOID MemoryInformation, _In_ SIZE_T MemoryInformationLength, _Out_opt_ PSIZE_T ReturnLength);
+	const auto func = it->second.GetPEHeader().GetProcAddress(xorstr_("NtQueryVirtualMemory"));
+
+	auto Query = reinterpret_cast<tNtQueryVirtualMemory>(func.value());
+	if (!Query)
+		return std::unexpected(TG::TG_STATUS::NULL_PTR);
+
+	std::vector<TG::Windows::HiddenModule*> hiddenModules;
+	SIZE_T Ret = 0;
+	while (NT_SUCCESS(Query(GetCurrentProcess(), pAddr, Ntdll::MemoryBasicInformation, &mbi, sizeof(mbi), &Ret)))
+	{
+		//Scan for PE-Header MZ
+		if (mbi.State == MEM_COMMIT && (mbi.Protect & (PAGE_READONLY | PAGE_READWRITE | PAGE_EXECUTE_READ | PAGE_EXECUTE_READWRITE)))
+		{
+			if (mbi.RegionSize >= sizeof(IMAGE_DOS_HEADER))
+			{
+				//Cast to it and check MZ
+				auto dosHeader = static_cast<IMAGE_DOS_HEADER*>(mbi.BaseAddress);
+				if (!dosHeader)
+					continue;
+
+				if (dosHeader->e_magic == IMAGE_DOS_SIGNATURE)
+				{
+					if (mbi.RegionSize >= dosHeader->e_lfanew + sizeof(IMAGE_NT_HEADERS))
+					{
+						auto ntHeaders = reinterpret_cast<IMAGE_NT_HEADERS*>(reinterpret_cast<uintptr_t>(dosHeader) + dosHeader->e_lfanew);
+						if (!ntHeaders)
+							continue;
+
+						if (ntHeaders->Signature == IMAGE_NT_SIGNATURE)
+						{
+							// Valid PE file found, add to hidden modules
+							hiddenModules.emplace_back(reinterpret_cast<TG::Windows::HiddenModule*>(dosHeader));
+						}
+					}
+				}
+			}
+		}
+
+		pAddr = reinterpret_cast<std::uintptr_t*>(reinterpret_cast<uintptr_t>(mbi.BaseAddress) + mbi.RegionSize);
+	}
+
+	return hiddenModules;
 }
 
 std::expected<const TG::Windows::Module*, TG::TG_STATUS> TG::Windows::ModuleManager::GetModule(
@@ -230,7 +362,7 @@ std::expected<TG::Windows::Module*, TG::TG_STATUS> TG::Windows::ModuleManager::G
 	return std::unexpected(TG_STATUS::NOT_FOUND);
 }
 
-std::expected<const TG::Windows::Module*, TG::TG_STATUS> TG::Windows::ModuleManager::GetHiddenModule(
+std::expected<const TG::Windows::HiddenModule*, TG::TG_STATUS> TG::Windows::ModuleManager::GetHiddenModule(
 	const std::wstring& name) const
 {
 	if (name.empty())
@@ -250,7 +382,7 @@ std::expected<const TG::Windows::Module*, TG::TG_STATUS> TG::Windows::ModuleMana
 	return std::unexpected(TG_STATUS::NOT_FOUND);
 }
 
-std::expected<TG::Windows::Module*, TG::TG_STATUS> TG::Windows::ModuleManager::GetHiddenModule(const std::wstring& name)
+std::expected<TG::Windows::HiddenModule*, TG::TG_STATUS> TG::Windows::ModuleManager::GetHiddenModule(const std::wstring& name)
 {
 	if (name.empty())
 		return std::unexpected(TG_STATUS::NOT_FOUND);

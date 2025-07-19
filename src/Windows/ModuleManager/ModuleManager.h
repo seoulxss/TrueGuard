@@ -7,10 +7,27 @@
 
 namespace TG::Windows
 {
+	enum class HOOK_IDENTIFIER : std::uint8_t;
+}
+
+namespace TG::Windows
+{
 	class HookManager;
+	
 
 	struct XXHash
 	{
+		template<typename Type>
+		std::uint64_t operator()(const std::unique_ptr<Type>& data) const
+		{
+			return XXH64(data.get(), sizeof(data.get()), 0);
+		}
+
+		std::uint64_t operator()(const HOOK_IDENTIFIER& data) const
+		{
+			return XXH64(&data, sizeof(data), 0);
+		}
+
 		std::uint64_t operator()(const std::wstring& data) const
 		{
 			return XXH64(data.data(), data.size(), 0);
@@ -20,6 +37,20 @@ namespace TG::Windows
 		{
 			return XXH64(data.data(), data.size(), 0);
 		}
+	};
+
+	class HiddenModule
+	{
+	public:
+		HiddenModule(std::uintptr_t StartAddr, bool IsPE, std::shared_ptr<HookManager> pHookManager);
+
+	private:
+		std::unique_ptr<PEHeader> m_pPEHeader = nullptr; //Only used if dll has a valid PE-Header
+
+		std::uintptr_t m_Size = 0;
+		std::uintptr_t m_StartAddr = 0;
+		bool m_IsSuspicious = false;
+		std::shared_ptr<HookManager> m_pHookManager = nullptr;
 	};
 
 	class Module
@@ -71,7 +102,14 @@ namespace TG::Windows
 
 		[[nodiscard]] const PEHeader& GetPEHeader() const;
 
+		[[nodiscard]] bool GetSuspicious() const;
+
 		PEHeader& GetPEHeader();
+
+
+		/*						Setters							*/
+
+		void SetSuspicious(bool val);
 
 	private:
 		Ntdll::LDR_DATA_TABLE_ENTRY* m_pDataTableEntry = nullptr;
@@ -84,6 +122,7 @@ namespace TG::Windows
 
 		PEHeader m_PEHeader;
 		std::shared_ptr<HookManager> m_pHookManager = nullptr;
+		bool m_IsSuspicious = false; 
 	};
 
 	//! Our ModuleManager which handles all the modules and checks them if they are modified or not.
@@ -91,6 +130,7 @@ namespace TG::Windows
 	{
 	public:
 		explicit ModuleManager(std::shared_ptr<HookManager> pHookManager);
+		explicit ModuleManager(HookManager* TempManager);
 
 		//! 
 		//! @return The map which contains all the loaded modules
@@ -108,27 +148,49 @@ namespace TG::Windows
 
 		//! 
 		//! @return The map which contains all the hidden modules
-		std::unordered_map<std::wstring, Module, XXHash>& GetHiddenMap()
+		std::unordered_map<std::wstring, HiddenModule, XXHash>& GetHiddenMap()
 		{
 			return m_HiddenModules;
 		}
+
+		//! Rescans the PEB Linked list and adds the modules which are new to the Map.
+		//! @return A vector with the new modules
+		std::expected<std::vector<Module*>, TG_STATUS> RescanModules();
+
+		//! Rescans the whole process to find new dll's & compares them to the orig map
+		//! @return A vector with the new modules
+		std::expected<std::vector<HiddenModule*>, TG_STATUS> RescanHiddenModules();
 
 		//! 
 		//! @return The map which contains all the hidden modules
-		[[nodiscard]] const std::unordered_map<std::wstring, Module, XXHash>& GetHiddenMap() const
+		[[nodiscard]] const std::unordered_map<std::wstring, HiddenModule, XXHash>& GetHiddenMap() const
 		{
 			return m_HiddenModules;
 		}
 
+		//! Get the module
+		//! @param name name of the module 
+		//! @return Either the module as a pointer or an error 
 		std::expected<const TG::Windows::Module*, TG::TG_STATUS> GetModule(const std::wstring& name) const;
+
+		//! Get the module
+		//! @param name name of the module 
+		//! @return Either the module as a pointer or an error 
 		std::expected<TG::Windows::Module*, TG::TG_STATUS> GetModule(const std::wstring& name);
 
-		std::expected<const TG::Windows::Module*, TG::TG_STATUS> GetHiddenModule(const std::wstring& name) const;
-		std::expected<TG::Windows::Module*, TG::TG_STATUS> GetHiddenModule(const std::wstring& name);
+		//! Get the hidden module
+		//! @param name name of the hidden module 
+		//! @return Either the hidden module as a pointer or an error 
+		std::expected<const TG::Windows::HiddenModule*, TG::TG_STATUS> GetHiddenModule(const std::wstring& name) const;
+
+		//! Get the hidden module
+		//! @param name name of the hidden module 
+		//! @return Either the hidden module as a pointer or an error 
+		std::expected<TG::Windows::HiddenModule*, TG::TG_STATUS> GetHiddenModule(const std::wstring& name);
 
 	private:
 		std::unordered_map<std::wstring, Module, XXHash> m_Modules;
-		std::unordered_map<std::wstring, Module, XXHash> m_HiddenModules;
+		std::unordered_map<std::wstring, HiddenModule, XXHash> m_HiddenModules;
 		std::shared_ptr<HookManager> m_pHookManager = nullptr;
 	};
 
