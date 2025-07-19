@@ -5045,6 +5045,17 @@ __pragma(warning(pop))
             ULONG DriverFilePathOffset;
         } EFI_DRIVER_ENTRY, * PEFI_DRIVER_ENTRY;
 
+        struct LDR_UNKSTRUCT
+        {
+            PWSTR pInitNameMaybe;
+            __declspec(align(16)) PWSTR Buffer;
+            int Flags;
+            PWSTR pDllName;
+            char Pad1[84];
+            BOOLEAN IsInitedMaybe;
+            char Pad2[3];
+        };
+
         typedef struct _EFI_DRIVER_ENTRY_LIST
         {
             ULONG NextEntryOffset;
