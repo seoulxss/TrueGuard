@@ -21,8 +21,8 @@ namespace TG::Hashing
 		BlakeHash();
 		~BlakeHash();
 
-		void Update(std::vector<std::uint8_t>& data) const;
-		void Update(void* data, size_t size) const;
+		void Update(const std::vector<std::uint8_t>& data) const;
+		void Update(const void* data, size_t size) const;
 		std::vector<std::uint8_t> Finalize() const;
 
 	private:

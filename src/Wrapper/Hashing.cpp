@@ -25,12 +25,12 @@ TG::Hashing::BlakeHash::~BlakeHash()
 	m_pHasher.reset();
 }
 
-void TG::Hashing::BlakeHash::Update(std::vector<std::uint8_t>& data) const
+void TG::Hashing::BlakeHash::Update(const std::vector<std::uint8_t>& data) const
 {
 	blake3_hasher_update(m_pHasher.get(), data.data(), data.size());
 }
 
-void TG::Hashing::BlakeHash::Update(void* data, size_t size) const
+void TG::Hashing::BlakeHash::Update(const void* data, const size_t size) const
 {
 	blake3_hasher_update(m_pHasher.get(), data, size);
 }
