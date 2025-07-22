@@ -133,12 +133,12 @@ std::expected<bool, TG::TG_STATUS> TG::Windows::Module::HasModulePEHeader()
 std::expected<bool, TG::TG_STATUS> TG::Windows::Module::IsModuleInPEBList()
 {
 	Ntdll::PEB* peb = Ntdll::NtCurrentPeb();
-	auto entry = &peb->Ldr->InInitializationOrderModuleList;
+	auto entry = &peb->Ldr->InMemoryOrderModuleList;
 
 	auto next = entry->Flink;
 	while (entry != next)
 	{
-		auto dll = CONTAINING_RECORD(next, Ntdll::LDR_DATA_TABLE_ENTRY, InInitializationOrderLinks);
+		auto dll = CONTAINING_RECORD(next, Ntdll::LDR_DATA_TABLE_ENTRY, InMemoryOrderLinks);
 		if (dll == m_pDataTableEntry)
 		{
 			return true;
@@ -173,7 +173,23 @@ TG::Windows::PEHeader& TG::Windows::Module::GetPEHeader()
 	return m_PEHeader;
 }
 
-void TG::Windows::Module::SetSuspicious(bool val)
+std::uint64_t TG::Windows::Module::GetModuleStartAddr() const
+{
+	if (m_pDataTableEntry)
+		return reinterpret_cast<std::uint64_t>(m_pDataTableEntry->DllBase);
+
+	return 0;
+}
+
+std::size_t TG::Windows::Module::GetModuleSize() const
+{
+	if (m_pDataTableEntry)
+		return static_cast<std::size_t>(m_pDataTableEntry->SizeOfImage);
+
+	return 0;
+}
+
+void TG::Windows::Module::SetSuspicious(const bool val)
 {
 	m_IsSuspicious = val;
 }
@@ -183,12 +199,12 @@ TG::Windows::ModuleManager::ModuleManager(std::shared_ptr<HookManager> pHookMana
 	m_Modules.reserve(300);
 
 	Ntdll::PEB* peb = Ntdll::NtCurrentPeb();
-	auto entry = &peb->Ldr->InInitializationOrderModuleList;
+	const auto entry = &peb->Ldr->InMemoryOrderModuleList;
 
 	auto next = entry->Flink;
 	while (entry != next)
 	{
-		auto dll = CONTAINING_RECORD(next, Ntdll::LDR_DATA_TABLE_ENTRY, InInitializationOrderLinks);
+		auto dll = CONTAINING_RECORD(next, Ntdll::LDR_DATA_TABLE_ENTRY, InMemoryOrderLinks);
 		if (dll)
 		{
 			std::wstring dllname = dll->BaseDllName.Buffer;
@@ -210,12 +226,12 @@ TG::Windows::ModuleManager::ModuleManager(HookManager* TempManager) : m_pHookMan
 	m_Modules.reserve(300);
 
 	Ntdll::PEB* peb = Ntdll::NtCurrentPeb();
-	auto entry = &peb->Ldr->InInitializationOrderModuleList;
+	auto entry = &peb->Ldr->InMemoryOrderModuleList;
 
 	auto next = entry->Flink;
 	while (entry != next)
 	{
-		auto dll = CONTAINING_RECORD(next, Ntdll::LDR_DATA_TABLE_ENTRY, InInitializationOrderLinks);
+		auto dll = CONTAINING_RECORD(next, Ntdll::LDR_DATA_TABLE_ENTRY, InMemoryOrderLinks);
 		if (dll)
 		{
 			std::wstring dllname = dll->BaseDllName.Buffer;
@@ -238,12 +254,12 @@ std::expected<std::vector<TG::Windows::Module*>, TG::TG_STATUS> TG::Windows::Mod
 	NewMods.reserve(10);
 
 	Ntdll::PEB* peb = Ntdll::NtCurrentPeb();
-	auto entry = &peb->Ldr->InInitializationOrderModuleList;
+	auto entry = &peb->Ldr->InMemoryOrderModuleList;
 
 	auto next = entry->Flink;
 	while (entry != next)
 	{
-		auto dll = CONTAINING_RECORD(next, Ntdll::LDR_DATA_TABLE_ENTRY, InInitializationOrderLinks);
+		auto dll = CONTAINING_RECORD(next, Ntdll::LDR_DATA_TABLE_ENTRY, InMemoryOrderLinks);
 		if (dll)
 		{
 			std::wstring dllname = dll->BaseDllName.Buffer;

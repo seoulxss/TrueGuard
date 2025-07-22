@@ -106,6 +106,10 @@ namespace TG::Windows
 
 		PEHeader& GetPEHeader();
 
+		std::uint64_t GetModuleStartAddr() const;
+
+		std::size_t GetModuleSize() const;
+
 
 		/*						Setters							*/
 
@@ -171,7 +175,7 @@ namespace TG::Windows
 		//! Get the module
 		//! @param name name of the module 
 		//! @return Either the module as a pointer or an error 
-		std::expected<const TG::Windows::Module*, TG::TG_STATUS> GetModule(const std::wstring& name) const;
+		[[nodiscard]] std::expected<const TG::Windows::Module*, TG::TG_STATUS> GetModule(const std::wstring& name) const;
 
 		//! Get the module
 		//! @param name name of the module 
@@ -181,7 +185,7 @@ namespace TG::Windows
 		//! Get the hidden module
 		//! @param name name of the hidden module 
 		//! @return Either the hidden module as a pointer or an error 
-		std::expected<const TG::Windows::HiddenModule*, TG::TG_STATUS> GetHiddenModule(const std::wstring& name) const;
+		[[nodiscard]] std::expected<const TG::Windows::HiddenModule*, TG::TG_STATUS> GetHiddenModule(const std::wstring& name) const;
 
 		//! Get the hidden module
 		//! @param name name of the hidden module 
