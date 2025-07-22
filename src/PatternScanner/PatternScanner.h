@@ -8,15 +8,7 @@
 #else
 #   define sig_has_cxx20  (0)
 #endif
-namespace Pattern
-{
-    struct WIN24H2
-    {
-        const char* LdrpLoadDllInternal = xorstr_("48 8B C4 48 89 50 ? 48 89 48 ? 53 56 57 41 54 41 55 41 56 41 57 48 83 EC");
-    };
-    inline WIN24H2 g_24H2Patter;
 
-}
 
 struct Sig
 {
