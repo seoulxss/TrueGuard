@@ -4,6 +4,7 @@
 #include <polyhook2/PE/IatHook.hpp>
 
 #include "HookDefs.h"
+#include "../../PatternScanner/PatternScanner.h"
 #include "../ModuleManager/ModuleManager.h"
 #include "../PEHeader/PEHeader.h"
 
@@ -15,14 +16,29 @@ namespace TG::Windows
 	{
 		LDR_GET_DLL_HANDLE, //So we can catch GetModuleHandleW etc...
 		LDR_LOAD_DLL, //Catch LoadLibrary etc..
+		LDR_PLOAD_DLL_INTERNAL,
 
 		NT_ALLOCATE_VIRTUAL_MEMORY,
 		NT_ALLOCATE_VIRTUAL_MEMORY_EX,
 
 		NT_PROTECT_VIRTUAL_MEMORY,
 		NT_QUERY_VIRTUAL_MEMORY,
+		NT_QUERY_SYSTEM_INFORMATION,
+		NT_QUERY_SYSTEM_INFORMATION_EX,
+
+		NT_WRITE_VIRTUAL_MEMORY,
+		NT_READ_VIRTUAL_MEMORY,
+
+		NT_SET_INFORMATION_PROCESS,
+		NT_SET_INFORMATION_THREAD,
+
+		NT_GET_CONTEXT_THREAD,
+		NT_SET_CONTEXT_THREAD,
+
+		NT_OPEN_PROCESS,
 
 		BASE_THREAD_INIT_THUNK,
+		LDR_GET_PROCEDURE_ADDRESS_FOR_CALLER,
 
 		MODULE_32_FIRST_W,
 		MODULE_32_NEXT_W,
@@ -188,6 +204,7 @@ namespace TG::Windows
 			//Nt (Ldr)
 			AddHook(HOOK_IDENTIFIER::LDR_GET_DLL_HANDLE, std::make_unique<DetHook>(reinterpret_cast<std::uint64_t>(manager.GetModule(xorstr_(L"ntdll.dll")).value()->GetPEHeader().GetProcAddress(xorstr_("LdrGetDllHandle")).value()), reinterpret_cast<std::uint64_t>(&Hooks::Functions::LdrGetDllHandle::HkLdrGetDllHandle)));
 			AddHook(HOOK_IDENTIFIER::LDR_LOAD_DLL, std::make_unique<DetHook>(reinterpret_cast<std::uint64_t>(manager.GetModule(xorstr_(L"ntdll.dll")).value()->GetPEHeader().GetProcAddress(xorstr_("LdrLoadDll")).value()), reinterpret_cast<std::uint64_t>(&Hooks::Functions::LdrLoadDll::HkLdrLoadDll)));
+			AddHook(HOOK_IDENTIFIER::LDR_GET_PROCEDURE_ADDRESS_FOR_CALLER, std::make_unique<DetHook>(reinterpret_cast<std::uint64_t>(manager.GetModule(xorstr_(L"ntdll.dll")).value()->GetPEHeader().GetProcAddress(xorstr_("LdrGetProcedureAddressForCaller")).value()), reinterpret_cast<std::uint64_t>(&Hooks::Functions::LdrGetProcedureAddressForCaller::HkLdrGetProcedureAddressForCaller)));
 
 			//Kernel32
 			AddHook(HOOK_IDENTIFIER::BASE_THREAD_INIT_THUNK, std::make_unique<DetHook>(reinterpret_cast<std::uint64_t>(manager.GetModule(xorstr_(L"kernel32.dll")).value()->GetPEHeader().GetProcAddress(xorstr_("BaseThreadInitThunk")).value()), reinterpret_cast<std::uint64_t>(&Hooks::Functions::BASE_THREAD_INIT_THUNK::HkBaseThreadInitThunk)));
@@ -199,6 +216,37 @@ namespace TG::Windows
 			AddHook(HOOK_IDENTIFIER::NT_QUERY_VIRTUAL_MEMORY, std::make_unique<DetHook>(reinterpret_cast<std::uint64_t>(manager.GetModule(xorstr_(L"ntdll.dll")).value()->GetPEHeader().GetProcAddress(xorstr_("NtQueryVirtualMemory")).value()), reinterpret_cast<std::uint64_t>(&Hooks::Functions::NtQueryVirtualMemory::HkNtQueryVirtualMemory)));
 			AddHook(HOOK_IDENTIFIER::NT_ALLOCATE_VIRTUAL_MEMORY, std::make_unique<DetHook>(reinterpret_cast<std::uint64_t>(manager.GetModule(xorstr_(L"ntdll.dll")).value()->GetPEHeader().GetProcAddress(xorstr_("NtAllocateVirtualMemory")).value()), reinterpret_cast<std::uint64_t>(&Hooks::Functions::NtAllocateVirtualMemory::HkNtAllocateVirtualMemory)));
 			AddHook(HOOK_IDENTIFIER::NT_ALLOCATE_VIRTUAL_MEMORY_EX, std::make_unique<DetHook>(reinterpret_cast<std::uint64_t>(manager.GetModule(xorstr_(L"ntdll.dll")).value()->GetPEHeader().GetProcAddress(xorstr_("NtAllocateVirtualMemoryEx")).value()), reinterpret_cast<std::uint64_t>(&Hooks::Functions::NtAllocateVirtualMemoryEx::HkAllocateVirtualMemoryEx)));
+			AddHook(HOOK_IDENTIFIER::NT_SET_INFORMATION_PROCESS, std::make_unique<DetHook>(reinterpret_cast<std::uint64_t>(manager.GetModule(xorstr_(L"ntdll.dll")).value()->GetPEHeader().GetProcAddress(xorstr_("NtSetInformationProcess")).value()), reinterpret_cast<std::uint64_t>(&Hooks::Functions::NtSetInformationProcess::HkNtSetInformationProcess)));
+			AddHook(HOOK_IDENTIFIER::NT_SET_INFORMATION_THREAD, std::make_unique<DetHook>(reinterpret_cast<std::uint64_t>(manager.GetModule(xorstr_(L"ntdll.dll")).value()->GetPEHeader().GetProcAddress(xorstr_("NtSetInformationThread")).value()), reinterpret_cast<std::uint64_t>(&Hooks::Functions::NtSetInformationThread::HkNtSetInformationThread)));
+			AddHook(HOOK_IDENTIFIER::NT_WRITE_VIRTUAL_MEMORY, std::make_unique<DetHook>(reinterpret_cast<std::uint64_t>(manager.GetModule(xorstr_(L"ntdll.dll")).value()->GetPEHeader().GetProcAddress(xorstr_("NtWriteVirtualMemory")).value()), reinterpret_cast<std::uint64_t>(&Hooks::Functions::NtWriteVirtualMemory::HkNtWriteVirtualMemory)));
+			AddHook(HOOK_IDENTIFIER::NT_READ_VIRTUAL_MEMORY, std::make_unique<DetHook>(reinterpret_cast<std::uint64_t>(manager.GetModule(xorstr_(L"ntdll.dll")).value()->GetPEHeader().GetProcAddress(xorstr_("NtReadVirtualMemory")).value()), reinterpret_cast<std::uint64_t>(&Hooks::Functions::NtReadVirtualMemory::HkNtReadVirtualMemory)));
+			AddHook(HOOK_IDENTIFIER::NT_GET_CONTEXT_THREAD, std::make_unique<DetHook>(reinterpret_cast<std::uint64_t>(manager.GetModule(xorstr_(L"ntdll.dll")).value()->GetPEHeader().GetProcAddress(xorstr_("NtGetContextThread")).value()), reinterpret_cast<std::uint64_t>(&Hooks::Functions::NtGetContextThread::HkNtGetContextThread)));
+			AddHook(HOOK_IDENTIFIER::NT_SET_CONTEXT_THREAD, std::make_unique<DetHook>(reinterpret_cast<std::uint64_t>(manager.GetModule(xorstr_(L"ntdll.dll")).value()->GetPEHeader().GetProcAddress(xorstr_("NtSetContextThread")).value()), reinterpret_cast<std::uint64_t>(&Hooks::Functions::NtSetContextThread::HkNtSetContextThread)));
+			AddHook(HOOK_IDENTIFIER::NT_QUERY_SYSTEM_INFORMATION, std::make_unique<DetHook>(reinterpret_cast<std::uint64_t>(manager.GetModule(xorstr_(L"ntdll.dll")).value()->GetPEHeader().GetProcAddress(xorstr_("NtQuerySystemInformation")).value()), reinterpret_cast<std::uint64_t>(&Hooks::Functions::NtQuerySystemInformation::HkNtQuerySystemInformation)));
+			AddHook(HOOK_IDENTIFIER::NT_QUERY_SYSTEM_INFORMATION_EX, std::make_unique<DetHook>(reinterpret_cast<std::uint64_t>(manager.GetModule(xorstr_(L"ntdll.dll")).value()->GetPEHeader().GetProcAddress(xorstr_("NtQuerySystemInformationEx")).value()), reinterpret_cast<std::uint64_t>(&Hooks::Functions::NtQuerySystemInformationEx::HkNtQuerySystemInformationEx)));
+
+
+			using tRtlGetVersion = Ntdll::NTSTATUS(NTAPI*)(PRTL_OSVERSIONINFOW);
+			auto RtlGetVer = reinterpret_cast<tRtlGetVersion>(manager.GetModule(xorstr_(L"ntdll.dll")).value()->GetPEHeader().GetProcAddress(xorstr_("RtlGetVersion")).value());
+
+			//Optional Hooks!
+			RTL_OSVERSIONINFOW info;
+			(RtlGetVer(&info));
+			{
+				if (info.dwBuildNumber == 26100)
+				{
+					auto pLdrpLoadDllInt = static_cast<const std::uintptr_t*>(Sig::find(manager.GetModule(xorstr_(L"ntdll.dll")).value()->GetDataTableEntry().value()->DllBase, manager.GetModule(xorstr_(L"ntdll.dll")).value()->GetDataTableEntry().value()->SizeOfImage, xorstr_("48 8B C4 48 89 50 ? 48 89 48 ? 53 56 57 41 54 41 55 41 56 41 57 48 83 EC")));
+					if (pLdrpLoadDllInt)
+					{
+						AddHook(HOOK_IDENTIFIER::LDR_PLOAD_DLL_INTERNAL, std::make_unique<DetHook>(reinterpret_cast<std::uint64_t>(pLdrpLoadDllInt), reinterpret_cast<std::uint64_t>(&Hooks::Functions::Optional::LdrpLoadDllInternal::HkLdrpLoadDllInternal)));
+
+						//Now we can unhook LdrLoadDll as LdrpLoadDllInternal is deeper
+						const auto it = m_Hooks.find(HOOK_IDENTIFIER::LDR_LOAD_DLL);
+						if (it != m_Hooks.end())
+							m_Hooks.erase(it);
+					}
+				}
+			}
 		}
 
 		~HookManager();

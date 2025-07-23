@@ -63,4 +63,110 @@ namespace TG::Hooks::Functions
 		BOOL WINAPI HkModule32NextW(HANDLE hSnap, MODULEENTRY32W* pEntry);
 	}
 
+	namespace NtWriteVirtualMemory
+	{
+		using tNtWriteVirtualMemory = Ntdll::NTSTATUS(NTAPI*)(_In_ HANDLE ProcessHandle,_In_opt_ PVOID BaseAddress,_In_reads_bytes_(NumberOfBytesToWrite) PVOID Buffer,_In_ SIZE_T NumberOfBytesToWrite,_Out_opt_ PSIZE_T NumberOfBytesWritten);
+		Ntdll::NTSTATUS NTAPI HkNtWriteVirtualMemory(_In_ HANDLE ProcessHandle, _In_opt_ PVOID BaseAddress, _In_reads_bytes_(NumberOfBytesToWrite) PVOID Buffer, _In_ SIZE_T NumberOfBytesToWrite, _Out_opt_ PSIZE_T NumberOfBytesWritten);
+	}
+
+	namespace NtReadVirtualMemory
+	{
+		using tNtReadVirtualMemory = Ntdll::NTSTATUS(NTAPI*)(_In_ HANDLE ProcessHandle,_In_opt_ PVOID BaseAddress,_Out_writes_bytes_to_(NumberOfBytesToRead, *NumberOfBytesRead) PVOID Buffer,_In_ SIZE_T NumberOfBytesToRead,_Out_opt_ PSIZE_T NumberOfBytesRead);
+		Ntdll::NTSTATUS NTAPI HkNtReadVirtualMemory(_In_ HANDLE ProcessHandle, _In_opt_ PVOID BaseAddress, _Out_writes_bytes_to_(NumberOfBytesToRead, *NumberOfBytesRead) PVOID Buffer, _In_ SIZE_T NumberOfBytesToRead, _Out_opt_ PSIZE_T NumberOfBytesRead);
+	}
+
+	namespace NtSetInformationProcess
+	{
+		using tNtSetInformationProcess = Ntdll::NTSTATUS(NTAPI*)(_In_ HANDLE ProcessHandle, _In_ Ntdll::PROCESSINFOCLASS ProcessInformationClass, _In_reads_bytes_(ProcessInformationLength) PVOID ProcessInformation, _In_ ULONG ProcessInformationLength);
+		Ntdll::NTSTATUS NTAPI HkNtSetInformationProcess(_In_ HANDLE ProcessHandle, _In_ Ntdll::PROCESSINFOCLASS ProcessInformationClass, _In_reads_bytes_(ProcessInformationLength) PVOID ProcessInformation, _In_ ULONG ProcessInformationLength);
+	}
+
+	namespace NtSetInformationThread
+	{
+		using tNtSetInformationThread = Ntdll::NTSTATUS(NTAPI*)(_In_ HANDLE ThreadHandle,_In_ Ntdll::THREADINFOCLASS ThreadInformationClass,_In_reads_bytes_(ThreadInformationLength) PVOID ThreadInformation,_In_ ULONG ThreadInformationLength);
+		Ntdll::NTSTATUS NTAPI HkNtSetInformationThread(_In_ HANDLE ThreadHandle, _In_ Ntdll::THREADINFOCLASS ThreadInformationClass, _In_reads_bytes_(ThreadInformationLength) PVOID ThreadInformation, _In_ ULONG ThreadInformationLength);
+	}
+
+	namespace NtSetContextThread
+	{
+		using tNtSetContextThread = Ntdll::NTSTATUS(NTAPI*)(_In_ HANDLE ThreadHandle,_In_ PCONTEXT ThreadContext);
+		Ntdll::NTSTATUS NTAPI HkNtSetContextThread(_In_ HANDLE ThreadHandle, _Inout_ PCONTEXT ThreadContext);
+	}
+
+	namespace NtGetContextThread
+	{
+		using tNtGetContextThread = Ntdll::NTSTATUS(NTAPI*)(_In_ HANDLE ThreadHandle, _Inout_ PCONTEXT ThreadContext);
+		Ntdll::NTSTATUS NTAPI HkNtGetContextThread(_In_ HANDLE ThreadHandle, _Inout_ PCONTEXT ThreadContext);
+
+	}
+
+	namespace NtOpenProcess
+	{
+		using tNtOpenProcess = Ntdll::NTSTATUS(NTAPI*)(_Out_ PHANDLE ProcessHandle, _In_ ACCESS_MASK DesiredAccess, _In_ Ntdll::PCOBJECT_ATTRIBUTES ObjectAttributes, _In_opt_ Ntdll::PCLIENT_ID ClientId);
+		Ntdll::NTSTATUS NTAPI HkOpenProcess(_Out_ PHANDLE ProcessHandle, _In_ ACCESS_MASK DesiredAccess, _In_ Ntdll::PCOBJECT_ATTRIBUTES ObjectAttributes, _In_opt_ Ntdll::PCLIENT_ID ClientId);
+	}
+
+	namespace NtQuerySystemInformation
+	{
+		using tNtQuerySystemInformation = Ntdll::NTSTATUS(NTAPI*)(_In_ Ntdll::SYSTEM_INFORMATION_CLASS SystemInformationClass,
+		                                                          _Out_writes_bytes_opt_(SystemInformationLength) PVOID SystemInformation,
+		                                                          _In_ ULONG SystemInformationLength,
+		                                                          _Out_opt_ PULONG ReturnLength);
+
+		Ntdll::NTSTATUS NTAPI HkNtQuerySystemInformation(_In_ Ntdll::SYSTEM_INFORMATION_CLASS SystemInformationClass,
+			_Out_writes_bytes_opt_(SystemInformationLength) PVOID SystemInformation,
+			_In_ ULONG SystemInformationLength,
+			_Out_opt_ PULONG ReturnLength);
+	}
+
+	namespace NtQuerySystemInformationEx
+	{
+		using tNtQuerySystemInformationEx = Ntdll::NTSTATUS(NTAPI*)(_In_ Ntdll::SYSTEM_INFORMATION_CLASS SystemInformationClass,
+		                                                            _In_reads_bytes_(InputBufferLength) PVOID InputBuffer,
+		                                                            _In_ ULONG InputBufferLength,
+		                                                            _Out_writes_bytes_opt_(SystemInformationLength) PVOID SystemInformation,
+		                                                            _In_ ULONG SystemInformationLength,
+		                                                            _Out_opt_ PULONG ReturnLength);
+
+		Ntdll::NTSTATUS NTAPI HkNtQuerySystemInformationEx(_In_ Ntdll::SYSTEM_INFORMATION_CLASS SystemInformationClass,
+			_In_reads_bytes_(InputBufferLength) PVOID InputBuffer,
+			_In_ ULONG InputBufferLength,
+			_Out_writes_bytes_opt_(SystemInformationLength) PVOID SystemInformation,
+			_In_ ULONG SystemInformationLength,
+			_Out_opt_ PULONG ReturnLength);
+	}
+
+
+	namespace LdrGetProcedureAddressForCaller //GetProcAddress
+	{
+		using tLdrGetProcedureAddressForCaller = Ntdll::NTSTATUS(NTAPI*)(__in HMODULE ModuleHandle, __in_opt Ntdll::PANSI_STRING  FunctionName, __in_opt WORD          Oridinal, __out    PVOID* FunctionAddress, __in     BOOL          bValue, __in     PVOID* CallbackAddress);
+		Ntdll::NTSTATUS NTAPI HkLdrGetProcedureAddressForCaller(__in HMODULE ModuleHandle, __in_opt Ntdll::PANSI_STRING  FunctionName, __in_opt WORD          Oridinal, __out    PVOID* FunctionAddress, __in     BOOL          bValue, __in     PVOID* CallbackAddress);
+
+	}
+
+
+	namespace Optional
+	{
+		namespace LdrpLoadDllInternal
+		{
+			using tLdrpLoadDllInternal = Ntdll::NTSTATUS(__fastcall*)(Ntdll::PUNICODE_STRING FullPath,
+				Ntdll::LDR_UNKSTRUCT* DllPathInited, ULONG Flags,
+				ULONG LdrFlags,
+				Ntdll::PLDR_DATA_TABLE_ENTRY LdrEntry,
+				Ntdll::PLDR_DATA_TABLE_ENTRY LdrEntry2,
+				Ntdll::PLDR_DATA_TABLE_ENTRY* DllEntry,
+				Ntdll::NTSTATUS* pStatus, ULONG Zero);
+
+			Ntdll::NTSTATUS __fastcall HkLdrpLoadDllInternal(
+				Ntdll::PUNICODE_STRING FullPath,
+				Ntdll::LDR_UNKSTRUCT* DllPathInited, ULONG Flags,
+				ULONG LdrFlags,
+				Ntdll::PLDR_DATA_TABLE_ENTRY LdrEntry,
+				Ntdll::PLDR_DATA_TABLE_ENTRY LdrEntry2,
+				Ntdll::PLDR_DATA_TABLE_ENTRY* DllEntry,
+				Ntdll::NTSTATUS* pStatus, ULONG Zero);
+
+		}
+
+	}
 }
