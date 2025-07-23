@@ -167,3 +167,10 @@ Ntdll::NTSTATUS TG::Hooks::Functions::NtMapViewOfSectionEx::HkNtMapViewOfSection
 {
 	return reinterpret_cast<tNtMapViewOfSectionEx>(Globals::g_pHookManager->GetHook(Windows::HOOK_IDENTIFIER::NT_MAP_VIEW_OF_SECTION_EX)->GetTrampoline())(SectionHandle, ProcessHandle, BaseAddress, SectionOffset, ViewSize, AllocationType, PageProtection, ExtendedParameters, ExtendedParameterCount);
 }
+
+Ntdll::NTSTATUS TG::Hooks::Functions::NtOpenFile::HkNtOpenFile(PHANDLE FileHandle, ACCESS_MASK DesiredAccess,
+	Ntdll::PCOBJECT_ATTRIBUTES ObjectAttributes, Ntdll::PIO_STATUS_BLOCK IoStatusBlock, ULONG ShareAccess,
+	ULONG OpenOptions)
+{
+	return reinterpret_cast<tNtOpenFile>(Globals::g_pHookManager->GetHook(Windows::HOOK_IDENTIFIER::NT_OPEN_FILE)->GetTrampoline())(FileHandle, DesiredAccess, ObjectAttributes, IoStatusBlock, ShareAccess, OpenOptions);
+}

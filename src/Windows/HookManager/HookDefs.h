@@ -192,6 +192,23 @@ namespace TG::Hooks::Functions
 
 	}
 
+	namespace NtOpenFile
+	{
+		using tNtOpenFile = Ntdll::NTSTATUS(NTAPI*)(_Out_ PHANDLE FileHandle,
+			_In_ ACCESS_MASK DesiredAccess,
+			_In_ Ntdll::PCOBJECT_ATTRIBUTES ObjectAttributes,
+			_Out_ Ntdll::PIO_STATUS_BLOCK IoStatusBlock,
+			_In_ ULONG ShareAccess,
+			_In_ ULONG OpenOptions);
+
+		Ntdll::NTSTATUS NTAPI HkNtOpenFile(_Out_ PHANDLE FileHandle,
+			_In_ ACCESS_MASK DesiredAccess,
+			_In_ Ntdll::PCOBJECT_ATTRIBUTES ObjectAttributes,
+			_Out_ Ntdll::PIO_STATUS_BLOCK IoStatusBlock,
+			_In_ ULONG ShareAccess,
+			_In_ ULONG OpenOptions);
+
+	}
 
 	namespace Optional
 	{

@@ -198,13 +198,13 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="src\Windows\HookManager\HookDefs.cpp" />
-    <ClCompile Include="src\Windows\MemoryAccessor\MemoryAccessor.cpp" />
     <ClCompile Include="LICENSE" />
     <ClCompile Include="src\Wrapper\Hashing.cpp" />
     <ClCompile Include="src\Windows\PEHeader\PEHeader.cpp" />
     <ClCompile Include="src\Windows\HookManager\HookManager.cpp" />
     <ClCompile Include="src\Windows\ModuleManager\ModuleManager.cpp" />
     <ClCompile Include="src\dllmain.cpp" />
+    <ClCompile Include="src\Windows\ThreadManager\ThreadManager.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include=".gitignore" />
@@ -216,13 +216,13 @@
     <ClInclude Include="src\Settings.h" />
     <ClInclude Include="src\PatternScanner\PatternScanner.h" />
     <ClInclude Include="src\Windows\HookManager\HookDefs.h" />
-    <ClInclude Include="src\Windows\MemoryAccessor\MemoryAccessor.h" />
     <ClInclude Include="src\Windows\ntdll.h" />
     <ClInclude Include="src\Wrapper\Hashing.h" />
     <ClInclude Include="src\Windows\PEHeader\PEHeader.h" />
     <ClInclude Include="src\Windows\HookManager\HookManager.h" />
     <ClInclude Include="src\Definitions.h" />
     <ClInclude Include="src\Windows\ModuleManager\ModuleManager.h" />
+    <ClInclude Include="src\Windows\ThreadManager\ThreadManager.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
