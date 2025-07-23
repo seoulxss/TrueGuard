@@ -136,6 +136,54 @@ namespace TG::Hooks::Functions
 			_Out_opt_ PULONG ReturnLength);
 	}
 
+	namespace NtMapViewOfSection
+	{
+		using tNtMapViewOfSection = Ntdll::NTSTATUS(NTAPI*)(_In_ HANDLE SectionHandle,
+			_In_ HANDLE ProcessHandle,
+			_Inout_ _At_(*BaseAddress, _Readable_bytes_(*ViewSize) _Writable_bytes_(*ViewSize) _Post_readable_byte_size_(*ViewSize)) PVOID* BaseAddress,
+			_In_ ULONG_PTR ZeroBits,
+			_In_ SIZE_T CommitSize,
+			_Inout_opt_ PLARGE_INTEGER SectionOffset,
+			_Inout_ PSIZE_T ViewSize,
+			_In_ Ntdll::SECTION_INHERIT InheritDisposition,
+			_In_ ULONG AllocationType,
+			_In_ ULONG PageProtection);
+
+		Ntdll::NTSTATUS NTAPI HkNtMapViewOfSection(_In_ HANDLE SectionHandle,
+			_In_ HANDLE ProcessHandle,
+			_Inout_ _At_(*BaseAddress, _Readable_bytes_(*ViewSize) _Writable_bytes_(*ViewSize) _Post_readable_byte_size_(*ViewSize)) PVOID* BaseAddress,
+			_In_ ULONG_PTR ZeroBits,
+			_In_ SIZE_T CommitSize,
+			_Inout_opt_ PLARGE_INTEGER SectionOffset,
+			_Inout_ PSIZE_T ViewSize,
+			_In_ Ntdll::SECTION_INHERIT InheritDisposition,
+			_In_ ULONG AllocationType,
+			_In_ ULONG PageProtection);
+
+	}
+
+	namespace NtMapViewOfSectionEx
+	{
+		using tNtMapViewOfSectionEx = Ntdll::NTSTATUS(NTAPI*)(_In_ HANDLE SectionHandle,
+			_In_ HANDLE ProcessHandle,
+			_Inout_ _At_(*BaseAddress, _Readable_bytes_(*ViewSize) _Writable_bytes_(*ViewSize) _Post_readable_byte_size_(*ViewSize)) PVOID* BaseAddress,
+			_Inout_opt_ PLARGE_INTEGER SectionOffset,
+			_Inout_ PSIZE_T ViewSize,
+			_In_ ULONG AllocationType,
+			_In_ ULONG PageProtection,
+			_Inout_updates_opt_(ExtendedParameterCount) PMEM_EXTENDED_PARAMETER ExtendedParameters,
+			_In_ ULONG ExtendedParameterCount);
+
+		Ntdll::NTSTATUS NTAPI HkNtMapViewOfSectionEx(_In_ HANDLE SectionHandle,
+			_In_ HANDLE ProcessHandle,
+			_Inout_ _At_(*BaseAddress, _Readable_bytes_(*ViewSize) _Writable_bytes_(*ViewSize) _Post_readable_byte_size_(*ViewSize)) PVOID* BaseAddress,
+			_Inout_opt_ PLARGE_INTEGER SectionOffset,
+			_Inout_ PSIZE_T ViewSize,
+			_In_ ULONG AllocationType,
+			_In_ ULONG PageProtection,
+			_Inout_updates_opt_(ExtendedParameterCount) PMEM_EXTENDED_PARAMETER ExtendedParameters,
+			_In_ ULONG ExtendedParameterCount);
+	}
 
 	namespace LdrGetProcedureAddressForCaller //GetProcAddress
 	{

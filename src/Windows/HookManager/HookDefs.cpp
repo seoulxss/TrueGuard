@@ -153,3 +153,17 @@ Ntdll::NTSTATUS NTAPI TG::Hooks::Functions::NtQuerySystemInformationEx::HkNtQuer
 {
 	return reinterpret_cast<tNtQuerySystemInformationEx>(Globals::g_pHookManager->GetHook(Windows::HOOK_IDENTIFIER::NT_QUERY_SYSTEM_INFORMATION_EX)->GetTrampoline())(SystemInformationClass, InputBuffer, InputBufferLength, SystemInformation, SystemInformationLength, ReturnLength);
 }
+
+Ntdll::NTSTATUS TG::Hooks::Functions::NtMapViewOfSection::HkNtMapViewOfSection(HANDLE SectionHandle,
+	HANDLE ProcessHandle, PVOID* BaseAddress, ULONG_PTR ZeroBits, SIZE_T CommitSize, PLARGE_INTEGER SectionOffset,
+	PSIZE_T ViewSize, Ntdll::SECTION_INHERIT InheritDisposition, ULONG AllocationType, ULONG PageProtection)
+{
+	return reinterpret_cast<tNtMapViewOfSection>(Globals::g_pHookManager->GetHook(Windows::HOOK_IDENTIFIER::NT_MAP_VIEW_OF_SECTION)->GetTrampoline())(SectionHandle, ProcessHandle, BaseAddress, ZeroBits, CommitSize, SectionOffset, ViewSize, InheritDisposition, AllocationType, PageProtection);
+}
+
+Ntdll::NTSTATUS TG::Hooks::Functions::NtMapViewOfSectionEx::HkNtMapViewOfSectionEx(HANDLE SectionHandle,
+	HANDLE ProcessHandle, PVOID* BaseAddress, PLARGE_INTEGER SectionOffset, PSIZE_T ViewSize, ULONG AllocationType,
+	ULONG PageProtection, PMEM_EXTENDED_PARAMETER ExtendedParameters, ULONG ExtendedParameterCount)
+{
+	return reinterpret_cast<tNtMapViewOfSectionEx>(Globals::g_pHookManager->GetHook(Windows::HOOK_IDENTIFIER::NT_MAP_VIEW_OF_SECTION_EX)->GetTrampoline())(SectionHandle, ProcessHandle, BaseAddress, SectionOffset, ViewSize, AllocationType, PageProtection, ExtendedParameters, ExtendedParameterCount);
+}
