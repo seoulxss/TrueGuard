@@ -76,5 +76,8 @@
     <ClInclude Include="src\PatternScanner\PatternScanner.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="src\Settings.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>
