@@ -69,6 +69,10 @@ TG::Windows::DetHook::~DetHook()
 
 TG::Windows::DetHook::DetHook(std::uint64_t FuncToHook, std::uint64_t Callback) : m_Trampoline(0), m_Callback(Callback), m_FuncToHook(FuncToHook), m_pDetHook(std::make_unique<PLH::NatDetour>(m_FuncToHook, m_Callback, &m_Trampoline))
 {
+	//We check the first 20 bytes.
+	m_OrigBytes = std::make_unique<std::byte[]>(20);
+	std::memcpy(m_OrigBytes.get(), reinterpret_cast<void*>(FuncToHook), 20);
+
 }
 
 void TG::Windows::DetHook::HookFunction()
@@ -76,6 +80,12 @@ void TG::Windows::DetHook::HookFunction()
 	if (!m_isHooked)
 	{
 		m_pDetHook->hook();
+		if (!m_BytesAfterHook)
+		{
+			m_BytesAfterHook = std::make_unique<std::byte[]>(20);
+			std::memcpy(m_BytesAfterHook.get(), reinterpret_cast<void*>(m_FuncToHook), 20);
+		}
+
 		m_isHooked = true;
 	}
 }
@@ -87,6 +97,25 @@ void TG::Windows::DetHook::UnHookFunction()
 		m_pDetHook->unHook();
 		m_isHooked = false;
 	}
+}
+
+bool TG::Windows::DetHook::GotHookPatchedExternally()
+{
+	std::byte buffer[20] = {};
+	std::memcpy(&buffer, reinterpret_cast<void*>(m_FuncToHook), 20);
+
+	if (m_isHooked)
+	{
+		if (memcmp(buffer, m_BytesAfterHook.get(), 20) == 0)
+			return false;
+		
+		return true;
+	}
+
+	if (memcmp(buffer, m_OrigBytes.get(), 20) == 0)
+		return false;
+
+	return true;
 }
 
 TG::Windows::HookManager::~HookManager()

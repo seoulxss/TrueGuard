@@ -54,9 +54,12 @@ namespace TG::Windows
 		virtual void UnHookFunction() = 0;
 		[[nodiscard]] virtual std::uint64_t GetTrampoline() const = 0;
 		[[nodiscard]] virtual bool IsHooked() const = 0;
+		virtual bool GotHookPatchedExternally() = 0;
 
 	protected:
 		bool m_isHooked = false;
+		std::unique_ptr<std::byte[]> m_OrigBytes = nullptr;
+		std::unique_ptr<std::byte[]> m_BytesAfterHook = nullptr;
 	};
 
 	class IATHook final : public Hook
@@ -188,6 +191,9 @@ namespace TG::Windows
 			return m_FuncToHook;
 		}
 
+		//Checks if the hook got patched away.
+		bool GotHookPatchedExternally() override;
+
 	private:
 		std::uint64_t m_Trampoline = 0;
 		std::uintptr_t m_Callback = 0;
@@ -226,7 +232,8 @@ namespace TG::Windows
 			AddHook(HOOK_IDENTIFIER::NT_SET_CONTEXT_THREAD, std::make_unique<DetHook>(reinterpret_cast<std::uint64_t>(manager.GetModule(xorstr_(L"ntdll.dll")).value()->GetPEHeader().GetProcAddress(xorstr_("NtSetContextThread")).value()), reinterpret_cast<std::uint64_t>(&Hooks::Functions::NtSetContextThread::HkNtSetContextThread)));
 			AddHook(HOOK_IDENTIFIER::NT_QUERY_SYSTEM_INFORMATION, std::make_unique<DetHook>(reinterpret_cast<std::uint64_t>(manager.GetModule(xorstr_(L"ntdll.dll")).value()->GetPEHeader().GetProcAddress(xorstr_("NtQuerySystemInformation")).value()), reinterpret_cast<std::uint64_t>(&Hooks::Functions::NtQuerySystemInformation::HkNtQuerySystemInformation)));
 			AddHook(HOOK_IDENTIFIER::NT_QUERY_SYSTEM_INFORMATION_EX, std::make_unique<DetHook>(reinterpret_cast<std::uint64_t>(manager.GetModule(xorstr_(L"ntdll.dll")).value()->GetPEHeader().GetProcAddress(xorstr_("NtQuerySystemInformationEx")).value()), reinterpret_cast<std::uint64_t>(&Hooks::Functions::NtQuerySystemInformationEx::HkNtQuerySystemInformationEx)));
-
+			AddHook(HOOK_IDENTIFIER::NT_MAP_VIEW_OF_SECTION, std::make_unique<DetHook>(reinterpret_cast<std::uint64_t>(manager.GetModule(xorstr_(L"ntdll.dll")).value()->GetPEHeader().GetProcAddress(xorstr_("NtMapViewOfSection")).value()), reinterpret_cast<std::uint64_t>(&Hooks::Functions::NtMapViewOfSection::HkNtMapViewOfSection)));
+			AddHook(HOOK_IDENTIFIER::NT_MAP_VIEW_OF_SECTION_EX, std::make_unique<DetHook>(reinterpret_cast<std::uint64_t>(manager.GetModule(xorstr_(L"ntdll.dll")).value()->GetPEHeader().GetProcAddress(xorstr_("NtMapViewOfSectionEx")).value()), reinterpret_cast<std::uint64_t>(&Hooks::Functions::NtMapViewOfSectionEx::HkNtMapViewOfSectionEx)));
 
 			using tRtlGetVersion = Ntdll::NTSTATUS(NTAPI*)(PRTL_OSVERSIONINFOW);
 			auto RtlGetVer = reinterpret_cast<tRtlGetVersion>(manager.GetModule(xorstr_(L"ntdll.dll")).value()->GetPEHeader().GetProcAddress(xorstr_("RtlGetVersion")).value());
