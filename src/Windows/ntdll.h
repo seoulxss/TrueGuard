@@ -3274,6 +3274,8 @@ __pragma(warning(pop))
             ShutdownPowerOff
         } SHUTDOWN_ACTION, * PSHUTDOWN_ACTION;
 
+        typedef const OBJECT_ATTRIBUTES* PCOBJECT_ATTRIBUTES;
+
         typedef enum _DEBUGOBJECTINFOCLASS
         {
             DebugObjectFlags = 1,
