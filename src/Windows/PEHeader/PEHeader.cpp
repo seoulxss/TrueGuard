@@ -126,11 +126,11 @@ std::expected<std::size_t, TG::TG_STATUS> TG::Windows::PEHeader::GetTextSectionS
 
 std::expected<std::vector<std::uint8_t>, TG::TG_STATUS> TG::Windows::PEHeader::GetHashOfTextSection()
 {
+	std::lock_guard lock(m_Mutex);
 	TG::Hashing::BlakeHash hasher;
 	auto size = GetTextSectionSize();
 	auto start = GetTextSection();
 
-	std::lock_guard lock(m_Mutex);
 	if (!size.has_value())
 		return std::unexpected<TG::TG_STATUS>(size.error());
 
@@ -154,6 +154,39 @@ std::expected<std::vector<std::uint8_t>, TG::TG_STATUS> TG::Windows::PEHeader::G
 
 	if (m_oHashOfTextSection.empty())
 		m_oHashOfTextSection = hash;
+
+	return hash;
+}
+
+std::expected<std::vector<std::uint8_t>, TG::TG_STATUS> TG::Windows::PEHeader::GetHashOfTextSectionAfterHooks()
+{
+	std::lock_guard lock(m_Mutex);
+	TG::Hashing::BlakeHash hasher;
+	auto size = GetTextSectionSize();
+	auto start = GetTextSection();
+
+	if (!size.has_value())
+		return std::unexpected<TG::TG_STATUS>(size.error());
+
+	if (!start.has_value())
+		return std::unexpected<TG::TG_STATUS>(start.error());
+
+	//Enable hooks if any are there!
+	if (m_pHookManager)
+	{
+		m_pHookManager->HookAll();
+		hasher.Update(start.value(), size.value());
+	}
+
+	else
+	{
+		hasher.Update(start.value(), size.value());
+	}
+
+	auto hash = hasher.Finalize();
+
+	if (m_oHashOfTextSectionAfterHooks.empty())
+		m_oHashOfTextSectionAfterHooks = hash;
 
 	return hash;
 }

@@ -48,6 +48,10 @@ namespace TG::Windows
 		//! @return A std::vector<std::uint8_t> hash of the .text section 
 		std::expected<std::vector<std::uint8_t>, TG_STATUS> GetHashOfTextSection();
 
+		//! Generates a blake3 hash of the .text section
+		//! @return A std::vector<std::uint8_t> hash of the .text section 
+		std::expected<std::vector<std::uint8_t>, TG_STATUS> GetHashOfTextSectionAfterHooks();
+
 		//! Checks if the file is valid (PE Header)
 		//! @return True if it is, false of not, or an error value
 		[[nodiscard]] std::expected<bool, TG_STATUS> IsValidFile() const;
@@ -73,6 +77,7 @@ namespace TG::Windows
 		TG::Windows::Module* m_pModule = nullptr;
 		std::shared_ptr<HookManager> m_pHookManager = nullptr;
 		std::vector<std::uint8_t> m_oHashOfTextSection = {};
+		std::vector<std::uint8_t> m_oHashOfTextSectionAfterHooks = {};
 		mutable std::shared_mutex m_Mutex;
 
 		IMAGE_SECTION_HEADER* GetSectionHeader(const std::wstring& sectionName);
