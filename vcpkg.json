@@ -2,5 +2,5 @@
   "$schema": "https://raw.githubusercontent.com/microsoft/vcpkg-tool/main/docs/vcpkg.schema.json",
   "name": "true-guard",
   "version": "1.0.0",
-  "dependencies": [ "polyhook2", "zydis", "cryptopp", "xxhash", "blake3", "phnt" ]
+  "dependencies": [ "polyhook2", "zydis", "cryptopp", "xxhash", "blake3", "phnt", "vmaware-vm-detection" ]
 }

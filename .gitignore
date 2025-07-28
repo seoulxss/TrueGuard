@@ -37,3 +37,4 @@ Build/
 Intermediate/
 vcpkg_installed
 /.vs/TrueGuard/v17/Browse.VC.db
+/ext/VMProtect/VMProtectSDK.h

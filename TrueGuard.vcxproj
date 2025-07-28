@@ -197,6 +197,9 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="src\AntiCheat\Integrity\Integrity.cpp" />
+    <ClCompile Include="src\Windows\InstrumentationCallback\Instrumentation.cpp" />
+    <ClCompile Include="src\AntiCheat\RetAddr\ReturnAddrValidator.cpp" />
     <ClCompile Include="src\Windows\HookManager\HookDefs.cpp" />
     <ClCompile Include="LICENSE" />
     <ClCompile Include="src\Wrapper\Hashing.cpp" />
@@ -205,6 +208,7 @@
     <ClCompile Include="src\Windows\ModuleManager\ModuleManager.cpp" />
     <ClCompile Include="src\dllmain.cpp" />
     <ClCompile Include="src\Windows\ThreadManager\ThreadManager.cpp" />
+    <ClCompile Include="src\Windows\Symbol\SymbolParser.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include=".gitignore" />
@@ -212,7 +216,11 @@
     <None Include="README.md" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="ext\VMProtect\VMProtectSDK.h" />
     <ClInclude Include="ext\XorStr\xorstr.h" />
+    <ClInclude Include="src\AntiCheat\Integrity\Integrity.h" />
+    <ClInclude Include="src\Windows\InstrumentationCallback\Instrumentation.h" />
+    <ClInclude Include="src\AntiCheat\RetAddr\ReturnAddrValidator.h" />
     <ClInclude Include="src\Settings.h" />
     <ClInclude Include="src\PatternScanner\PatternScanner.h" />
     <ClInclude Include="src\Windows\HookManager\HookDefs.h" />
@@ -223,6 +231,14 @@
     <ClInclude Include="src\Definitions.h" />
     <ClInclude Include="src\Windows\ModuleManager\ModuleManager.h" />
     <ClInclude Include="src\Windows\ThreadManager\ThreadManager.h" />
+    <ClInclude Include="src\Windows\Symbol\SymbolParser.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <MASM Include="src\Windows\InstrumentationCallback\Bridge.asm" />
+  </ItemGroup>
+  <ItemGroup>
+    <Library Include="ext\VMProtect\VMProtectSDK32.lib" />
+    <Library Include="ext\VMProtect\VMProtectSDK64.lib" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
